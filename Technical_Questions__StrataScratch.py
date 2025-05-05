@@ -23,8 +23,8 @@
 #    1.11 Highly Reviewed Hotels
 #    1.12 Customer Details
 #    1.13 Order Details
-#    1.14 ***** In progress *****
-#    1.15 
+#    1.14 Average Salaries
+#    1.15 ***** In progress *****
 #    1.16 
 
 # 2. Difficulty: Medium  (41 Questions)
@@ -433,6 +433,68 @@ JOIN orders
     ON customers.id = orders.cust_id
 WHERE first_name IN ('Jill', 'Eva')
 ORDER BY cust_id;
+
+
+
+# 1.14 Average Salaries
+# https://platform.stratascratch.com/coding/9917-average-salaries?code_type=2
+
+# Compare each employee's salary with the average salary of the corresponding department.
+# Output the department, first name, and salary of employees along with the average salary of that department.
+
+
+# Python
+# ******
+# Solution #1 - with added new column "avg_salary" using groupby(...)[...].transform("mean")
+import pandas as pd
+
+employee = employee.assign(avg_salary = employee.groupby(by="department")["salary"].transform("mean"))
+employee[["department", "first_name", "salary", "avg_salary"]].sort_values(by="department")
+
+
+# Solution #2 - using a new DataFrame with calculated average salaries by department and then .merge(...)
+import pandas as pd
+
+df_dpt_avg_sal = employee.groupby(by="department", as_index=False)["salary"].mean()
+df_dpt_avg_sal = df_dpt_avg_sal.rename(columns={"salary": "avg_salary"})
+
+df_dpt_avg_sal.merge(employee, on="department")[["department", "first_name", "salary", "avg_salary"]]
+
+
+# MySQL
+# *****
+# Solution #1 - using a Window Function
+SELECT
+    department,
+    first_name,
+    salary,
+    AVG(salary) OVER(PARTITION BY department) AS avg_salary
+FROM employee
+ORDER BY department;
+
+
+# Solution #2 - using a CTE with calculated average salaries by department and then JOIN
+WITH cte_dpt_avg_sal AS
+(
+SELECT
+    department,
+    AVG(salary) AS avg_salary
+FROM employee
+GROUP BY department
+ORDER BY department
+)
+SELECT
+    cdas.department,
+    first_name,
+    salary,
+    avg_salary
+FROM cte_dpt_avg_sal AS cdas
+JOIN employee AS emp
+    ON cdas.department = emp.department
+ORDER BY department;
+
+
+
 
 
 
