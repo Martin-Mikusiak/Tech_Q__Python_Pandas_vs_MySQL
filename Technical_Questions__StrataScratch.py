@@ -22,9 +22,10 @@
 #    1.10 Workers by Department Since April
 #    1.11 Highly Reviewed Hotels
 #    1.12 Customer Details
-#    1.13 ***** In progress *****
-#    1.14 
+#    1.13 Order Details
+#    1.14 ***** In progress *****
 #    1.15 
+#    1.16 
 
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 ***** In progress *****
@@ -398,6 +399,41 @@ FROM customers
 LEFT JOIN orders
     ON customers.id = orders.cust_id
 ORDER BY first_name, order_details;
+
+
+
+# 1.13 Order Details
+# https://platform.stratascratch.com/coding/9913-order-details?code_type=2
+
+# Find order details made by Jill and Eva. Consider the Jill and Eva as first names of customers.
+# Output the order date, details and cost along with the first name.
+# Order records based on the customer id in ascending order.
+
+
+# Python
+# ******
+import pandas as pd
+
+cust_list = ["Jill", "Eva"]
+
+customers[customers["first_name"].isin(cust_list)].merge(orders, left_on="id", right_on="cust_id").sort_values(by="cust_id")[["first_name", "order_date", "order_details", "total_order_cost"]]
+
+
+# MySQL
+# *****
+SELECT
+    first_name,
+    order_date,
+    order_details,
+    total_order_cost
+FROM customers
+JOIN orders
+    ON customers.id = orders.cust_id
+WHERE first_name IN ('Jill', 'Eva')
+ORDER BY cust_id;
+
+
+
 
 
 
