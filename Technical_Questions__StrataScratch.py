@@ -24,8 +24,9 @@
 #    1.12 Customer Details
 #    1.13 Order Details
 #    1.14 Average Salaries
-#    1.15 ***** In progress *****
-#    1.16 
+#    1.15 Email Preference Missing
+#    1.16 ***** In progress *****
+#    1.17 
 
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 ***** In progress *****
@@ -365,8 +366,8 @@ hotel_reviews[["hotel_name", "total_number_of_reviews"]].sort_values(by="total_n
 
 # MySQL
 # *****
-SELECT
-    DISTINCT hotel_name,
+SELECT DISTINCT
+    hotel_name,
     total_number_of_reviews
 FROM hotel_reviews
 ORDER BY total_number_of_reviews DESC;
@@ -495,7 +496,33 @@ ORDER BY department;
 
 
 
+# 1.15 Email Preference Missing
+# https://platform.stratascratch.com/coding/9924-find-libraries-who-havent-provided-the-email-address-in-2016-but-their-notice-preference-definition-is-set-to-email?code_type=2
 
+# Find libraries from the 2016 circulation year that have no email address provided but have their notice preference set to email.
+# In your solution, output their home library code.
+
+
+# Python
+# ******
+import pandas as pd
+
+library_usage[
+    library_usage["circulation_active_year"].eq(2016) &
+    library_usage["notice_preference_definition"].eq("email") &
+    library_usage["provided_email_address"].eq(False)
+][["home_library_code"]].drop_duplicates()
+
+
+# MySQL
+# *****
+SELECT DISTINCT
+    home_library_code
+FROM library_usage
+WHERE
+    circulation_active_year = 2016 AND
+    notice_preference_definition = 'email' AND
+    provided_email_address = FALSE;
 
 
 
