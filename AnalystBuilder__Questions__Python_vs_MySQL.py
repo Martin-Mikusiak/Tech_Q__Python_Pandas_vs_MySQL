@@ -2,7 +2,7 @@
 # ************************************************************
 # https://www.analystbuilder.com/questions
 
-# My own solutions in Python Pandas and MySQL
+# My own solutions - both in Python Pandas and in MySQL
 
 
 # Contents
