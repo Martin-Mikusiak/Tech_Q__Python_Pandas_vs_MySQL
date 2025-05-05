@@ -416,7 +416,9 @@ import pandas as pd
 
 cust_list = ["Jill", "Eva"]
 
-customers[customers["first_name"].isin(cust_list)].merge(orders, left_on="id", right_on="cust_id").sort_values(by="cust_id")[["first_name", "order_date", "order_details", "total_order_cost"]]
+customers[
+    customers["first_name"].isin(cust_list)
+].merge(orders, left_on="id", right_on="cust_id").sort_values(by="cust_id")[["first_name", "order_date", "order_details", "total_order_cost"]]
 
 
 # MySQL
