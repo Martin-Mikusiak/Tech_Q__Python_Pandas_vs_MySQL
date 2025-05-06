@@ -31,8 +31,12 @@
 #    1.19 Lyft Driver Wages
 #    1.20 Popularity of Hack
 #    1.21 Find all posts which were reacted to with a heart
-#    1.22 ***** In progress *****
-#    1.23 
+#    1.22 Abigail Breslin Nominations
+#    1.23 Reviews of Hotel Arena
+#    1.24 ***** In progress *****
+#    1.25 
+#    1.26 
+#    1.27 
 
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 ***** In progress *****
@@ -727,6 +731,58 @@ SELECT p.*
 FROM facebook_posts AS p
 JOIN cte_heart AS h
     ON p.post_id = h.post_id;
+
+
+
+# 1.22 Abigail Breslin Nominations
+# https://platform.stratascratch.com/coding/10128-count-the-number-of-movies-that-abigail-breslin-nominated-for-oscar?code_type=2
+
+# Count the number of movies for which Abigail Breslin was nominated for an Oscar.
+
+
+# Python
+# ******
+import pandas as pd
+
+oscar_nominees[oscar_nominees["nominee"].eq("Abigail Breslin")]["movie"].nunique()
+
+
+# MySQL
+# *****
+SELECT
+    COUNT(DISTINCT movie)
+FROM oscar_nominees
+WHERE nominee = 'Abigail Breslin';
+
+
+
+# 1.23 Reviews of Hotel Arena
+# https://platform.stratascratch.com/coding/10166-reviews-of-hotel-arena?code_type=2
+
+# Find how many reviews exist for each review score given to 'Hotel Arena'.
+# Output the hotel name ('Hotel Arena'), each review score, and the number of reviews for that score.
+
+
+# Python
+# ******
+import pandas as pd
+
+hotel_reviews[hotel_reviews["hotel_name"].eq("Hotel Arena")].groupby(["hotel_name", "reviewer_score"]).size().to_frame("rev_count").reset_index()
+
+
+# MySQL
+# *****
+SELECT
+    hotel_name,
+    reviewer_score,
+    COUNT(*) AS rev_count
+FROM hotel_reviews
+WHERE hotel_name = 'Hotel Arena'
+GROUP BY reviewer_score
+ORDER BY reviewer_score;
+
+
+
 
 
 
