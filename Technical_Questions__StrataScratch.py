@@ -30,8 +30,8 @@
 #    1.18 Artist Appearance Count
 #    1.19 Lyft Driver Wages
 #    1.20 Popularity of Hack
-#    1.21 ***** In progress *****
-#    1.22 
+#    1.21 Find all posts which were reacted to with a heart
+#    1.22 ***** In progress *****
 #    1.23 
 
 # 2. Difficulty: Medium  (41 Questions)
@@ -470,7 +470,7 @@ df_dpt_avg_sal.merge(employee, on="department")[["department", "first_name", "sa
 
 # MySQL
 # *****
-# Solution #1 - using a Window Function
+# Solution #1 - using a Window Function OVER(PARTITION BY ...)
 SELECT
     department,
     first_name,
@@ -570,7 +570,7 @@ WHERE
 
 # Python
 # ******
-# Solution #1 - using .groupby(...) .count() and rename column
+# Solution #1 - using .groupby(...) .count() and then rename the column
 import pandas as pd
 
 df_gr = spotify_worldwide_daily_song_ranking[
@@ -611,7 +611,7 @@ ORDER BY times_top1 DESC;
 
 # Python
 # ******
-# Solution #1 - using .groupby(...) .count() and rename column
+# Solution #1 - using .groupby(...) .count() and then rename the column
 import pandas as pd
 
 df_gr = spotify_worldwide_daily_song_ranking.groupby(by="artist", as_index=False)["position"].count()
@@ -666,7 +666,7 @@ WHERE
 # 1.20 Popularity of Hack
 # https://platform.stratascratch.com/coding/10061-popularity-of-hack?code_type=2
 
-# Find the average popularity of the Hack programing language per office location.
+# Find the average popularity of the 'Hack' programming language per office location.
 # Output the location along with the average popularity.
 
 
@@ -687,6 +687,49 @@ FROM facebook_hack_survey AS hs
 JOIN facebook_employees AS em
     ON hs.employee_id = em.id
 GROUP BY location;
+
+
+
+# 1.21 Find all posts which were reacted to with a heart
+# https://platform.stratascratch.com/coding/10087-find-all-posts-which-were-reacted-to-with-a-heart?code_type=2
+
+# Find all posts which were reacted to with a heart.
+# For such posts output all columns from facebook_posts table.
+
+
+# Python
+# ******
+import pandas as pd
+
+facebook_reactions[facebook_reactions["reaction"].eq("heart")][["post_id"]].drop_duplicates().merge(facebook_posts, on="post_id")
+
+
+# MySQL
+# *****
+# Solution #1
+SELECT DISTINCT
+    p.*
+FROM facebook_posts AS p
+JOIN facebook_reactions AS r
+    ON p.post_id = r.post_id AND
+    reaction = 'heart';
+
+
+# Solution #2 - using a CTE
+WITH cte_heart AS
+(
+SELECT DISTINCT
+    post_id
+FROM facebook_reactions
+WHERE reaction = 'heart'
+)
+SELECT p.*
+FROM facebook_posts AS p
+JOIN cte_heart AS h
+    ON p.post_id = h.post_id;
+
+
+
 
 
 
