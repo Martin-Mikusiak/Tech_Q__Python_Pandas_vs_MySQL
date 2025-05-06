@@ -25,8 +25,14 @@
 #    1.13 Order Details
 #    1.14 Average Salaries
 #    1.15 Email Preference Missing
-#    1.16 ***** In progress *****
-#    1.17 
+#    1.16 Captain Base Pay
+#    1.17 Top Ranked Songs
+#    1.18 Artist Appearance Count
+#    1.19 Lyft Driver Wages
+#    1.20 Popularity of Hack
+#    1.21 ***** In progress *****
+#    1.22 
+#    1.23 
 
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 ***** In progress *****
@@ -525,6 +531,162 @@ WHERE
     provided_email_address = FALSE;
 
 
+
+# 1.16 Captain Base Pay
+# https://platform.stratascratch.com/coding/9972-find-the-base-pay-for-police-captains?code_type=2
+
+# Find the base pay for Police Captains.
+# Output the employee name along with the corresponding base pay.
+
+
+# Python
+# ******
+import pandas as pd
+
+sf_public_salaries[
+    sf_public_salaries["jobtitle"].str.contains("captain", case=False, regex=False) &
+    sf_public_salaries["jobtitle"].str.contains("police" , case=False, regex=False)
+][["employeename", "basepay"]]
+
+
+# MySQL
+# *****
+SELECT
+    employeename,
+    basepay
+FROM sf_public_salaries
+WHERE
+    jobtitle LIKE '%captain%' AND
+    jobtitle LIKE '%police%';
+
+
+
+# 1.17 Top Ranked Songs
+# https://platform.stratascratch.com/coding/9991-top-ranked-songs?code_type=2
+
+# Find songs that have ranked in the top position. Output the track name and the number of times it ranked at the top.
+# Sort your records by the number of times the song was in the top position in descending order.
+
+
+# Python
+# ******
+# Solution #1 - using .groupby(...) .count() and rename column
+import pandas as pd
+
+df_gr = spotify_worldwide_daily_song_ranking[
+    spotify_worldwide_daily_song_ranking["position"].eq(1)
+].groupby(by="trackname", as_index=False)["position"].count()
+
+df_gr = df_gr.rename(columns={"position": "times_top1"})
+df_gr.sort_values(by="times_top1", ascending=False)
+
+
+# Solution #2 - using .groupby(...) .size().to_frame(...).reset_index()
+import pandas as pd
+
+df_gr = spotify_worldwide_daily_song_ranking[
+    spotify_worldwide_daily_song_ranking["position"].eq(1)
+].groupby(by="trackname").size().to_frame("times_top1").reset_index().sort_values(by="times_top1", ascending=False)
+
+
+# MySQL
+# *****
+SELECT
+    trackname,
+    COUNT(*) AS times_top1
+FROM spotify_worldwide_daily_song_ranking
+WHERE position = 1
+GROUP BY trackname
+ORDER BY times_top1 DESC;
+
+
+
+# 1.18 Artist Appearance Count
+# https://platform.stratascratch.com/coding/9992-find-artists-that-have-been-on-spotify-the-most-number-of-times?code_type=2
+
+# Find how many times each artist appeared on the Spotify ranking list.
+# Output the artist name along with the corresponding number of occurrences.
+# Order records by the number of occurrences in descending order.
+
+
+# Python
+# ******
+# Solution #1 - using .groupby(...) .count() and rename column
+import pandas as pd
+
+df_gr = spotify_worldwide_daily_song_ranking.groupby(by="artist", as_index=False)["position"].count()
+df_gr = df_gr.rename(columns={"position": "n_occurences"})
+df_gr.sort_values(by="n_occurences", ascending=False)
+
+
+# Solution #2 - using .groupby(...) .size().to_frame(...).reset_index()
+import pandas as pd
+
+df_gr = spotify_worldwide_daily_song_ranking.groupby(by="artist").size().to_frame("n_occurences").reset_index().sort_values(by="n_occurences", ascending=False)
+
+
+# MySQL
+# *****
+SELECT
+    artist,
+    COUNT(*) AS n_occurences
+FROM spotify_worldwide_daily_song_ranking
+GROUP BY artist
+ORDER BY n_occurences DESC;
+
+
+
+# 1.19 Lyft Driver Wages
+# https://platform.stratascratch.com/coding/10003-lyft-driver-wages?code_type=2
+
+# Find all Lyft drivers who earn either equal to or less than 30k USD or equal to or more than 70k USD.
+# Output all details related to retrieved records.
+
+
+# Python
+# ******
+import pandas as pd
+
+lyft_drivers[
+    lyft_drivers["yearly_salary"].le(30000) |
+    lyft_drivers["yearly_salary"].ge(70000)
+]
+
+
+# MySQL
+# *****
+SELECT *
+FROM lyft_drivers
+WHERE
+    yearly_salary <= 30000 OR
+    yearly_salary >= 70000;
+
+
+
+# 1.20 Popularity of Hack
+# https://platform.stratascratch.com/coding/10061-popularity-of-hack?code_type=2
+
+# Find the average popularity of the Hack programing language per office location.
+# Output the location along with the average popularity.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = facebook_hack_survey.merge(facebook_employees, left_on="employee_id", right_on="id").groupby(by="location", as_index=False)["popularity"].mean()
+df = df.rename(columns={"popularity": "avg_popularity"})
+
+
+# MySQL
+# *****
+SELECT
+    location,
+    AVG(popularity) AS avg_popularity
+FROM facebook_hack_survey AS hs
+JOIN facebook_employees AS em
+    ON hs.employee_id = em.id
+GROUP BY location;
 
 
 
