@@ -33,8 +33,8 @@
 #    1.21 Find all posts which were reacted to with a heart
 #    1.22 Abigail Breslin Nominations
 #    1.23 Reviews of Hotel Arena
-#    1.24 ***** In progress *****
-#    1.25 
+#    1.24 Bikes Last Used
+#    1.25 ***** In progress *****
 #    1.26 
 #    1.27 
 
@@ -780,6 +780,43 @@ FROM hotel_reviews
 WHERE hotel_name = 'Hotel Arena'
 GROUP BY reviewer_score
 ORDER BY reviewer_score;
+
+
+
+# 1.24 Bikes Last Used
+# https://platform.stratascratch.com/coding/10176-bikes-last-used?code_type=2
+
+# Find the last time each bike was in use.
+# Output both the bike number and the date-timestamp of the bike's last use (i.e., the date-time the bike was returned).
+# Order the results by bikes that were most recently used.
+
+
+# Python
+# ******
+# Solution #1 - using .groupby(...) .max() and then rename the column
+import pandas as pd
+
+df = dc_bikeshare_q1_2012.groupby(by="bike_number", as_index=False)["end_time"].max()
+df = df.rename(columns={"end_time": "last_used"})
+df.sort_values(by="last_used", ascending=False)
+
+
+# Solution #2 - using .groupby(...) .max().to_frame(...).reset_index()
+import pandas as pd
+
+dc_bikeshare_q1_2012.groupby(by="bike_number")["end_time"].max().to_frame("last_used").reset_index().sort_values(by="last_used", ascending=False)
+
+
+# MySQL
+# *****
+SELECT
+    bike_number,
+    MAX(end_time) AS last_used
+FROM dc_bikeshare_q1_2012
+GROUP BY bike_number
+ORDER BY last_used DESC;
+
+
 
 
 
