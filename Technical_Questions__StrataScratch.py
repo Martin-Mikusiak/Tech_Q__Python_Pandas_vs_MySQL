@@ -34,8 +34,8 @@
 #    1.22 Abigail Breslin Nominations
 #    1.23 Reviews of Hotel Arena
 #    1.24 Bikes Last Used
-#    1.25 ***** In progress *****
-#    1.26 
+#    1.25 Finding Updated Records
+#    1.26 ***** In progress *****
 #    1.27 
 
 # 2. Difficulty: Medium  (41 Questions)
@@ -809,12 +809,51 @@ dc_bikeshare_q1_2012.groupby(by="bike_number")["end_time"].max().to_frame("last_
 
 # MySQL
 # *****
+# Solution #1 - using GROUP BY
 SELECT
     bike_number,
     MAX(end_time) AS last_used
 FROM dc_bikeshare_q1_2012
 GROUP BY bike_number
 ORDER BY last_used DESC;
+
+
+# Solution #2 - using SELECT DISTINCT and a Window Function OVER(PARTITION BY ...)
+SELECT DISTINCT
+    bike_number,
+    MAX(end_time) OVER(PARTITION BY bike_number) AS last_used
+FROM dc_bikeshare_q1_2012
+ORDER BY last_used DESC;
+
+
+
+# 1.25 Finding Updated Records
+# https://platform.stratascratch.com/coding/10299-finding-updated-records?code_type=2
+
+# We have a table with employees and their salaries, however, some of the records are old and contain outdated salary information.
+# Find the current salary of each employee assuming that salaries increase each year.
+# Output their id, first name, last name, department ID, and current salary.
+# Order your list by employee ID in ascending order.
+
+
+# Python
+# ******
+import pandas as pd
+
+ms_employee_salary.groupby(by=["id", "first_name", "last_name", "department_id"])["salary"].max().to_frame("curr_salary").reset_index().sort_values(by="id")
+
+
+# MySQL
+# *****
+SELECT
+    id,
+    first_name,
+    last_name,
+    department_id,
+    MAX(salary) AS curr_salary
+FROM ms_employee_salary
+GROUP BY id
+ORDER BY id;
 
 
 
