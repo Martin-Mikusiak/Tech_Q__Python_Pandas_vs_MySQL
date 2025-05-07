@@ -39,8 +39,8 @@
 #    1.27 Workers With The Highest Salaries
 
 # 2. Difficulty: Medium  (41 Questions)
-#    2.1 ***** In progress *****
-#    2.2 
+#    2.1 Share of Active Users
+#    2.2 ***** In progress *****
 #    2.3 
 #    2.4 
 #    2.5 
@@ -903,5 +903,40 @@ FROM worker AS w
 JOIN title AS t
     ON w.worker_id = t.worker_ref_id
 WHERE salary = (SELECT MAX(salary) FROM worker);
+
+
+
+
+
+# 2. Difficulty: Medium  (41 Questions)
+# *************************************
+
+# 2.1 Share of Active Users
+# https://platform.stratascratch.com/coding/2005-share-of-active-users?code_type=2
+
+# Calculate the percentage of users who are both from the US and have an 'open' status, as indicated in the fb_active_users table.
+
+
+# Python
+# ******
+import pandas as pd
+
+usa_active_pctg = fb_active_users[
+    fb_active_users["country"].eq("USA") &
+    fb_active_users["status"].eq("open")
+].shape[0] / fb_active_users.shape[0] * 100
+
+
+# MySQL
+# *****
+SELECT
+    COUNT(*) / (SELECT COUNT(*) FROM fb_active_users) * 100 AS usa_active_pctg
+FROM fb_active_users
+WHERE
+    country = 'USA' AND
+    status  = 'open';
+
+
+
 
 
