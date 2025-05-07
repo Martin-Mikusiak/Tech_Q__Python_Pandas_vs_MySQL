@@ -35,8 +35,8 @@
 #    1.23 Reviews of Hotel Arena
 #    1.24 Bikes Last Used
 #    1.25 Finding Updated Records
-#    1.26 ***** In progress *****
-#    1.27 
+#    1.26 Salaries Differences
+#    1.27 Workers With The Highest Salaries
 
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 ***** In progress *****
@@ -857,11 +857,51 @@ ORDER BY id;
 
 
 
+# 1.26 Salaries Differences
+# https://platform.stratascratch.com/coding/10308-salaries-differences?code_type=2
+
+# Calculates the difference between the highest salaries in the marketing and engineering departments.
+# Output just the absolute difference in salaries.
+
+
+# Python
+# ******
+import pandas as pd
+
+salary_diff = abs( db_employee[db_employee["department_id"].eq(1)]["salary"].max() - db_employee[db_employee["department_id"].eq(4)]["salary"].max() )
+
+
+# MySQL
+# *****
+SELECT
+    ABS(
+    (SELECT MAX(salary) FROM db_employee WHERE department_id = 1) - 
+    (SELECT MAX(salary) FROM db_employee WHERE department_id = 4)
+    ) AS salary_diff;
 
 
 
+# 1.27 Workers With The Highest Salaries
+# https://platform.stratascratch.com/coding/10353-workers-with-the-highest-salaries?code_type=2
+
+# Find the job titles of the employees with the highest salary.
+# If multiple employees have the same highest salary, include the job titles for all such employees.
 
 
+# Python
+# ******
+import pandas as pd
 
+worker[worker["salary"].eq(worker["salary"].max())].merge(title, left_on="worker_id", right_on="worker_ref_id")["worker_title"]
+
+
+# MySQL
+# *****
+SELECT
+    worker_title
+FROM worker AS w
+JOIN title AS t
+    ON w.worker_id = t.worker_ref_id
+WHERE salary = (SELECT MAX(salary) FROM worker);
 
 
