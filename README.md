@@ -1,4 +1,4 @@
-Technical Questions
+Technical / Analytical Questions
 
 Analyst Builder:
 https://www.analystbuilder.com/questions
