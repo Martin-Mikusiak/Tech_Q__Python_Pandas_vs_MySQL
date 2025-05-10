@@ -40,8 +40,8 @@
 
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 Share of Active Users
-#    2.2 ***** In progress *****
-#    2.3 
+#    2.2 Premium Accounts
+#    2.3 ***** In progress *****
 #    2.4 
 #    2.5 
 #    2.6 
@@ -935,6 +935,56 @@ FROM fb_active_users
 WHERE
     country = 'USA' AND
     status  = 'open';
+
+
+
+# 2.2 Premium Accounts
+# https://platform.stratascratch.com/coding/2097-premium-acounts?code_type=2
+
+# You have a dataset that records daily active users for each premium account.
+# A premium account appears in the data every day as long as it remains premium.
+# However, some premium accounts may be temporarily discounted, meaning they are not actively paying — this is indicated by a final_price of 0.
+# For each of the first 7 available dates, count the number of premium accounts that were actively paying on that day.
+# Then, track how many of those same accounts remain premium and are still paying exactly 7 days later (regardless of activity in between).
+# Output three columns:
+# - The date of initial calculation.
+# - The number of premium accounts that were actively paying on that day.
+# - The number of those accounts that remain premium and are still paying after 7 days.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = premium_accounts_by_day.assign(date_p_7d = premium_accounts_by_day["entry_date"] + pd.DateOffset(7))
+
+dfm = df.merge(df, how="left", left_on=["account_id", "date_p_7d"], right_on=["account_id", "entry_date"], suffixes=("_L", "_R"))
+dfm = dfm[dfm["final_price_L"].gt(0)][["account_id", "entry_date_L", "final_price_L", "final_price_R"]]
+dfm = dfm.rename(columns={"entry_date_L": "entry_date"})
+
+dfm_gr = dfm.groupby(by="entry_date", as_index=False).agg(
+    premium_paid_acc_count         =("final_price_L", "count"),
+    premium_paid_acc_count_after_7d=("final_price_R", lambda x: x.gt(0).sum())
+    ).head(7)
+
+
+# MySQL
+# *****
+SELECT
+    p1.entry_date,
+    COUNT(p1.final_price)            AS premium_paid_acc_count,
+    COUNT(NULLIF(p2.final_price, 0)) AS premium_paid_acc_count_after_7d
+FROM premium_accounts_by_day AS p1
+LEFT JOIN premium_accounts_by_day AS p2
+    ON p1.account_id = p2.account_id AND
+    ADDDATE(p1.entry_date, 7) = p2.entry_date
+WHERE
+    p1.final_price > 0
+GROUP BY p1.entry_date
+LIMIT 7;
+
+
+
 
 
 
