@@ -42,8 +42,8 @@
 #    2.1 Share of Active Users
 #    2.2 Premium Accounts
 #    2.3 Election Results
-#    2.4 ***** In progress *****
-#    2.5 
+#    2.4 Flags per Video
+#    2.5 ***** In progress *****
 #    2.6 
 #    2.7 
 #    2.8 
@@ -1048,5 +1048,46 @@ FROM cte_vote_value_sum
 SELECT candidate
 FROM cte_rank
 WHERE vote_rank = 1;
+
+
+
+# 2.4 Flags per Video
+# https://platform.stratascratch.com/coding/2102-flags-per-video?code_type=2
+
+# For each video, find how many unique users flagged it.
+# A unique user can be identified using the combination of their first name and last name.
+# Do not consider rows in which there is no flag ID.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = user_flags[user_flags["flag_id"].notna() & user_flags["flag_id"].str.strip().ne("")]
+df = df.assign(user_fullname = df["user_firstname"].fillna("_").str.strip() + " " + df["user_lastname"].fillna("_").str.strip())
+df = df[["video_id", "user_fullname"]].drop_duplicates().sort_values(by=["video_id", "user_fullname"])
+
+df_gr = df.groupby(by="video_id").size().to_frame("num_unique_users").reset_index()
+
+
+# MySQL
+# *****
+WITH cte_fullnames AS
+(
+SELECT
+    video_id,
+    CONCAT( TRIM(COALESCE(user_firstname, '_')), ' ', TRIM(COALESCE(user_lastname, '_')) ) AS user_fullname
+FROM user_flags
+WHERE
+    TRIM(flag_id) != '' AND
+    flag_id IS NOT NULL
+)
+SELECT
+    video_id,
+    COUNT(DISTINCT user_fullname) AS num_unique_users
+FROM cte_fullnames
+GROUP BY video_id
+ORDER BY video_id;
+
 
 
