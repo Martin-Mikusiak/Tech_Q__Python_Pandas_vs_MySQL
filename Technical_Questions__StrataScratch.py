@@ -41,8 +41,8 @@
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 Share of Active Users
 #    2.2 Premium Accounts
-#    2.3 ***** In progress *****
-#    2.4 
+#    2.3 Election Results
+#    2.4 ***** In progress *****
 #    2.5 
 #    2.6 
 #    2.7 
@@ -985,8 +985,68 @@ LIMIT 7;
 
 
 
+# 2.3 Election Results
+# https://platform.stratascratch.com/coding/2099-election-results?code_type=2
+
+# The election is conducted in a city and everyone can vote for one or more candidates, or choose not to vote at all.
+# Each person has 1 vote so if they vote for multiple candidates, their vote gets equally split across these candidates.
+# For example, if a person votes for 2 candidates, these candidates receive an equivalent of 0.5 vote each.
+# Some voters have chosen not to vote, which explains the blank entries in the dataset.
+# Find out who got the most votes and won the election. Output the name of the candidate, or multiple names in case of a tie.
+# To avoid issues with a floating-point error you can round the number of votes received by a candidate to 3 decimal places.
 
 
+# Python
+# ******
+import pandas as pd
 
+df = voting_results[
+    voting_results["candidate"].notna() & 
+    voting_results["candidate"].str.strip().ne("")
+    ].sort_values(by=["voter", "candidate"]).reset_index(drop=True)
+
+df = df.assign(vote_value = 1 / df.groupby(by="voter")["candidate"].transform("count"))
+
+df_results = df.groupby(by="candidate", as_index=False)["vote_value"].sum().round(3)
+df_results = df_results.rename(columns={"vote_value": "vote_value_sum"})
+
+df_results = df_results.assign(vote_rank = df_results["vote_value_sum"].rank(method="dense", ascending=False))
+df_results["vote_rank"] = df_results["vote_rank"].astype(int, errors="ignore")              # This line is not required, but nice for presentation of the overall results
+df_results = df_results.sort_values(by=["vote_rank", "candidate"]).reset_index(drop=True)   # This line is not required, but nice for presentation of the overall results
+df_results[df_results["vote_rank"].eq(1)]["candidate"]
+
+
+# MySQL
+# *****
+WITH cte_vote_value AS
+(
+SELECT
+    voter,
+    candidate,
+    1 / COUNT(*) OVER(PARTITION BY voter) AS vote_value
+FROM voting_results
+WHERE
+    TRIM(candidate) != '' AND
+    candidate IS NOT NULL
+ORDER BY voter, candidate
+),
+cte_vote_value_sum AS
+(
+SELECT
+    candidate,
+    ROUND(SUM(vote_value), 3) AS vote_value_sum
+FROM cte_vote_value
+GROUP BY candidate
+),
+cte_rank AS
+(
+SELECT
+    *,
+    DENSE_RANK() OVER(ORDER BY vote_value_sum DESC) AS vote_rank
+FROM cte_vote_value_sum
+)
+SELECT candidate
+FROM cte_rank
+WHERE vote_rank = 1;
 
 
