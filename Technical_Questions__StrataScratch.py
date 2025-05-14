@@ -43,8 +43,8 @@
 #    2.2 Premium Accounts
 #    2.3 Election Results
 #    2.4 Flags per Video
-#    2.5 ***** In progress *****
-#    2.6 
+#    2.5 User with Most Approved Flags
+#    2.6 ***** In progress *****
 #    2.7 
 #    2.8 
 #    2.9 
@@ -1088,6 +1088,48 @@ SELECT
 FROM cte_fullnames
 GROUP BY video_id
 ORDER BY video_id;
+
+
+
+# 2.5 User with Most Approved Flags
+# https://platform.stratascratch.com/coding/2104-user-with-most-approved-flags?code_type=2
+
+# Which user flagged the most distinct videos that ended up approved by YouTube?
+# Output, in one column, their full name or names in case of a tie.
+# In the user's full name, include a space between the first and the last name.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = user_flags.merge(flag_review, on="flag_id")
+df = df[df["reviewed_outcome"].str.lower().eq("approved")]
+df = df.assign(user_fullname = df["user_firstname"].fillna("_").str.strip() + " " + df["user_lastname"].fillna("_").str.strip())
+df = df[["user_fullname", "video_id"]].drop_duplicates().sort_values(by=["user_fullname", "video_id"])
+
+df_gr = df.groupby(by="user_fullname").size().to_frame("videos_count").reset_index()
+df_gr[df_gr["videos_count"].eq(df_gr["videos_count"].max())]["user_fullname"]
+
+
+# MySQL
+# *****
+WITH cte_appr_vid_count AS
+(
+SELECT
+    CONCAT( TRIM(COALESCE(user_firstname, '_')), ' ', TRIM(COALESCE(user_lastname, '_')) ) AS user_fullname,
+    COUNT(DISTINCT video_id) AS videos_count
+FROM user_flags AS uf
+JOIN flag_review AS fr
+    ON uf.flag_id = fr.flag_id
+WHERE LOWER(reviewed_outcome) = 'approved'
+GROUP BY user_fullname
+)
+SELECT user_fullname
+FROM cte_appr_vid_count
+WHERE videos_count = (SELECT MAX(videos_count) FROM cte_appr_vid_count);
+
+
 
 
 
