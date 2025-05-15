@@ -44,8 +44,8 @@
 #    2.3 Election Results
 #    2.4 Flags per Video
 #    2.5 User with Most Approved Flags
-#    2.6 ***** In progress *****
-#    2.7 
+#    2.6 Find Students At Median Writing
+#    2.7 ***** In progress *****
 #    2.8 
 #    2.9 
 #    2.10 
@@ -1128,6 +1128,43 @@ GROUP BY user_fullname
 SELECT user_fullname
 FROM cte_appr_vid_count
 WHERE videos_count = (SELECT MAX(videos_count) FROM cte_appr_vid_count);
+
+
+
+# 2.6 Find Students At Median Writing
+# https://platform.stratascratch.com/coding/9610-find-students-with-a-median-writing-score?code_type=2
+
+# Identify the IDs of students who scored exactly at the median for the SAT writing section.
+
+
+# Python
+# ******
+import pandas as pd
+
+sat_scores[sat_scores["sat_writing"].eq(sat_scores["sat_writing"].median())]["student_id"]
+
+
+# MySQL
+# *****
+WITH cte_row_nr AS
+(
+SELECT
+    ROW_NUMBER() OVER(ORDER BY sat_writing) AS row_nr,
+    student_id,
+    sat_writing,
+    COUNT(*) OVER() AS rows_count
+FROM sat_scores
+),
+cte_median AS
+(
+SELECT
+    AVG(sat_writing) AS s_w_median
+FROM cte_row_nr
+WHERE row_nr IN( FLOOR((rows_count + 1) / 2), CEIL((rows_count + 1) / 2) )
+)
+SELECT student_id
+FROM cte_row_nr, cte_median
+WHERE sat_writing = s_w_median;
 
 
 
