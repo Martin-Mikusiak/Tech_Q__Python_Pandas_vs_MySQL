@@ -130,16 +130,11 @@ GROUP BY date_year_month;
 # ******
 import pandas as pd
 
-online_orders = online_orders.assign(revenue    = online_orders["cost_in_dollars"] * online_orders["units_sold"])
-online_orders = online_orders.assign(date_month = online_orders["date_sold"].dt.month)
+online_orders = online_orders.assign(revenue = online_orders["cost_in_dollars"] * online_orders["units_sold"])
 
-online_orders_fltr = online_orders[
-    (online_orders["date_month"].ge(1)) &
-    (online_orders["date_month"].le(6))
-]
+df_o_o_fltr = online_orders[online_orders["date_sold"].dt.month.between(1, 6, inclusive="both")]
 
-df_o_o_gr = online_orders_fltr.groupby(by="product_id", as_index=False)["revenue"].sum()
-df_o_o_gr.nlargest(5, "revenue")
+df_o_o_gr = df_o_o_fltr.groupby(by="product_id", as_index=False)["revenue"].sum().nlargest(5, "revenue")
 
 
 # MySQL
