@@ -1146,6 +1146,7 @@ sat_scores[sat_scores["sat_writing"].eq(sat_scores["sat_writing"].median())]["st
 
 # MySQL
 # *****
+# Unlike Python Pandas, MySQL has no built-in MEDIAN() function.
 WITH cte_row_nr AS
 (
 SELECT
@@ -1165,8 +1166,4 @@ WHERE row_nr IN( FLOOR((rows_count + 1) / 2), CEIL((rows_count + 1) / 2) )
 SELECT student_id
 FROM cte_row_nr, cte_median
 WHERE sat_writing = s_w_median;
-
-
-
-
 
