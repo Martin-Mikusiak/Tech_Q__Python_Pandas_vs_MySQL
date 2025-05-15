@@ -191,8 +191,7 @@ ORDER BY city, property_type;
 # ******
 import pandas as pd
 
-df_p_e_gr = playbook_events[playbook_events["device"].eq("macbook pro")].groupby(by="event_name", as_index=False)["user_id"].count()
-df_p_e_gr = df_p_e_gr.rename(columns={"user_id": "event_count"})
+df_p_e_gr = playbook_events[playbook_events["device"].eq("macbook pro")].groupby(by="event_name").size().to_frame("event_count").reset_index()
 df_p_e_gr.sort_values(by="event_count", ascending=False)
 
 
@@ -307,12 +306,7 @@ ORDER BY insp_year;
 # ******
 import pandas as pd
 
-worker = worker.assign(date_month = worker["joining_date"].dt.month)
-
-worker[
-    worker["department"].eq("Admin") &
-    worker["date_month"].ge(4)
-]["worker_id"].count()
+admin_empl_count = worker[worker["department"].eq("Admin") & worker["joining_date"].dt.month.ge(4)]["worker_id"].count()
 
 
 # MySQL
