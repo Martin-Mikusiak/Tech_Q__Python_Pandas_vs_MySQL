@@ -1226,10 +1226,10 @@ SELECT DISTINCT
     business_name,
     CASE
         WHEN business_name LIKE '%restaurant%' THEN 'restaurant'
-        WHEN business_name LIKE '%cafe%' THEN 'cafe'
-        WHEN business_name LIKE '%café%' THEN 'cafe'
-        WHEN business_name LIKE '%coffee%' THEN 'cafe'
-        WHEN business_name LIKE '%school%' THEN 'school'
+        WHEN business_name LIKE '%cafe%'       THEN 'cafe'
+        WHEN business_name LIKE '%café%'       THEN 'cafe'
+        WHEN business_name LIKE '%coffee%'     THEN 'cafe'
+        WHEN business_name LIKE '%school%'     THEN 'school'
         ELSE 'other'
     END AS business_type
 FROM sf_restaurant_health_violations;
