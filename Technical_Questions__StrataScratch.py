@@ -45,8 +45,8 @@
 #    2.4 Flags per Video
 #    2.5 User with Most Approved Flags
 #    2.6 Find Students At Median Writing
-#    2.7 ***** In progress *****
-#    2.8 
+#    2.7 Top 10 Songs 2010
+#    2.8 ***** In progress *****
 #    2.9 
 #    2.10 
 #    2.11 
@@ -1155,4 +1155,35 @@ WHERE row_nr IN( FLOOR((rows_count + 1) / 2), CEIL((rows_count + 1) / 2) )
 SELECT student_id
 FROM cte_row_nr, cte_median
 WHERE sat_writing = s_w_median;
+
+
+
+# 2.7 Top 10 Songs 2010
+# https://platform.stratascratch.com/coding/9650-find-the-top-10-ranked-songs-in-2010?code_type=2
+
+# Find the top 10 ranked songs in 2010. Output the rank, group name, and song name, but do not show the same song twice.
+# Sort the result based on the rank in ascending order.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = billboard_top_100_year_end[
+    billboard_top_100_year_end["year"].eq(2010) & 
+    billboard_top_100_year_end["year_rank"].between(1, 10, inclusive="both")
+    ][["year_rank", "group_name", "song_name"]].drop_duplicates().sort_values(by="year_rank")
+
+
+# MySQL
+# *****
+SELECT DISTINCT
+    year_rank,
+    group_name,
+    song_name
+FROM billboard_top_100_year_end
+WHERE
+    year = 2010 AND
+    year_rank BETWEEN 1 AND 10
+ORDER BY year_rank;
 
