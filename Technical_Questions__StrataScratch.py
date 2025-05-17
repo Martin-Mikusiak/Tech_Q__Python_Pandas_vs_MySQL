@@ -1216,7 +1216,6 @@ df["business_type"] = df["business_type"].mask(df["business_name"].str.contains(
 df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("café",       case=False, regex=False), "cafe")
 df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("coffee",     case=False, regex=False), "cafe")
 df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("school",     case=False, regex=False), "school")
-
 df
 
 
