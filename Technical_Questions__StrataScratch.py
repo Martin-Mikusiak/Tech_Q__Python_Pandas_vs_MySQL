@@ -46,8 +46,8 @@
 #    2.5 User with Most Approved Flags
 #    2.6 Find Students At Median Writing
 #    2.7 Top 10 Songs 2010
-#    2.8 ***** In progress *****
-#    2.9 
+#    2.8 Classify Business Type
+#    2.9 ***** In progress *****
 #    2.10 
 #    2.11 
 #    2.12 
@@ -1187,3 +1187,49 @@ WHERE
     year_rank BETWEEN 1 AND 10
 ORDER BY year_rank;
 
+
+
+# 2.8 Classify Business Type
+# https://platform.stratascratch.com/coding/9726-classify-business-type?code_type=2
+
+# Classify each business as either a restaurant, cafe, school, or other.
+# - A restaurant should have the word 'restaurant' in the business name.
+# - A cafe should have either 'cafe', 'café', or 'coffee' in the business name.
+# - A school should have the word 'school' in the business name.
+# - All other businesses should be classified as 'other'.
+# Ensure each business name appears only once in the final output.
+# If multiple records exist for the same business, retain only one unique instance.
+# The final output should include only the distinct business names and their corresponding classifications.
+
+
+# Python
+# ******
+import pandas as pd
+
+sf_restaurant_health_violations = sf_restaurant_health_violations.assign(business_type = "other")
+
+df = sf_restaurant_health_violations[["business_name", "business_type"]].drop_duplicates()
+
+# Due to an outdated Pandas version on the server, it was not possible to apply the .case_when() method
+df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("restaurant", case=False, regex=False), "restaurant")
+df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("cafe",       case=False, regex=False), "cafe")
+df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("café",       case=False, regex=False), "cafe")
+df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("coffee",     case=False, regex=False), "cafe")
+df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("school",     case=False, regex=False), "school")
+
+df
+
+
+# MySQL
+# *****
+SELECT DISTINCT
+    business_name,
+    CASE
+        WHEN business_name LIKE '%restaurant%' THEN 'restaurant'
+        WHEN business_name LIKE '%cafe%' THEN 'cafe'
+        WHEN business_name LIKE '%café%' THEN 'cafe'
+        WHEN business_name LIKE '%coffee%' THEN 'cafe'
+        WHEN business_name LIKE '%school%' THEN 'school'
+        ELSE 'other'
+    END AS business_type
+FROM sf_restaurant_health_violations;
