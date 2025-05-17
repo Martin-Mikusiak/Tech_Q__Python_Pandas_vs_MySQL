@@ -47,9 +47,9 @@
 #    2.6 Find Students At Median Writing
 #    2.7 Top 10 Songs 2010
 #    2.8 Classify Business Type
-#    2.9 ***** In progress *****
-#    2.10 
-#    2.11 
+#    2.9 Processed Ticket Rate By Type
+#    2.10 Customer Revenue In March
+#    2.11 ***** In progress *****
 #    2.12 
 
 # 3. Difficulty: Hard  (12 Questions)
@@ -1210,7 +1210,7 @@ sf_restaurant_health_violations = sf_restaurant_health_violations.assign(busines
 
 df = sf_restaurant_health_violations[["business_name", "business_type"]].drop_duplicates()
 
-# Due to an outdated Pandas version on the server, it was not possible to apply the .case_when() method
+# Due to an outdated Pandas version on the StrataScratch server, it was not possible to apply the .case_when() method
 df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("restaurant", case=False, regex=False), "restaurant")
 df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("cafe",       case=False, regex=False), "cafe")
 df["business_type"] = df["business_type"].mask(df["business_name"].str.contains("café",       case=False, regex=False), "cafe")
@@ -1232,3 +1232,68 @@ SELECT DISTINCT
         ELSE 'other'
     END AS business_type
 FROM sf_restaurant_health_violations;
+
+
+
+# 2.9 Processed Ticket Rate By Type
+# https://platform.stratascratch.com/coding/9781-find-the-rate-of-processed-tickets-for-each-type?code_type=2
+
+# Find the processed rate of tickets for each type.
+# The processed rate is defined as the number of processed tickets divided by the total number of tickets for that type.
+# Round this result to two decimal places.
+
+
+# Python
+# ******
+# Solution #1 - Simple
+import pandas as pd
+
+df = facebook_complaints.groupby(by="type", as_index=False).agg(processed_rate = ("processed", "mean")).round(2)
+
+
+# Solution #2
+import pandas as pd
+
+df = facebook_complaints.groupby(by="type", as_index=False).agg(
+    pr_true  = ("processed"   , "sum"  ),
+    pr_count = ("complaint_id", "count"))
+
+df = df.assign(processed_rate = (df["pr_true"] / df["pr_count"]).round(2))
+df[["type", "processed_rate"]]
+
+
+# MySQL
+# *****
+SELECT
+    type,
+    ROUND(AVG(processed), 2) AS processed_rate
+FROM facebook_complaints
+GROUP BY type;
+
+
+
+# 2.10 Customer Revenue In March
+# https://platform.stratascratch.com/coding/9782-customer-revenue-in-march?code_type=2
+
+# Calculate the total revenue from each customer in March 2019. Include only customers who were active in March 2019.
+# Output the revenue along with the customer id and sort the results based on the revenue in descending order.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = orders[
+    orders["order_date"].dt.strftime("%Y%m").eq("201903")
+    ].groupby(by="cust_id", as_index=False).agg(total_revenue = ("total_order_cost", "sum")).sort_values(by="total_revenue", ascending=False)
+
+
+# MySQL
+# *****
+SELECT
+    cust_id,
+    SUM(total_order_cost) AS total_revenue
+FROM orders
+WHERE EXTRACT(YEAR_MONTH FROM order_date) = 201903
+GROUP BY cust_id
+ORDER BY total_revenue DESC;
