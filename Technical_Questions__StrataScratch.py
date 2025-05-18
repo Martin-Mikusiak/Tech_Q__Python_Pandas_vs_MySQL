@@ -49,8 +49,11 @@
 #    2.8 Classify Business Type
 #    2.9 Processed Ticket Rate By Type
 #    2.10 Customer Revenue In March
-#    2.11 ***** In progress *****
-#    2.12 
+#    2.11 Count Occurrences Of Words In Drafts
+#    2.12 Titanic Survivors and Non-Survivors
+#    2.13 ***** In progress *****
+#    2.14 
+#    2.15 
 
 # 3. Difficulty: Hard  (12 Questions)
 #    3.1 ***** In progress *****
@@ -1297,3 +1300,65 @@ FROM orders
 WHERE EXTRACT(YEAR_MONTH FROM order_date) = 201903
 GROUP BY cust_id
 ORDER BY total_revenue DESC;
+
+
+
+# 2.11 Count Occurrences Of Words In Drafts
+# https://platform.stratascratch.com/coding/9817-find-the-number-of-times-each-word-appears-in-drafts?code_type=2
+
+# Find the number of times each word appears in the contents column across all rows in the drafts dataset.
+# Output two columns: word and occurrences.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_words = google_file_store["contents"].str.lower().str.split().explode().str.replace(r"[.,]", "", regex=True).to_frame("word")
+
+df_gr = df_words.groupby(by="word").size().to_frame("occurrences").reset_index().sort_values(by=["occurrences", "word"], ascending=[False, True])
+
+
+# MySQL
+# *****
+# Two possible complicated solutions:
+# 1. Using a RECURSIVE CTE and SUBSTRING_INDEX() & SUBSTRING() functions, UNION ALL etc. + REGEXP_REPLACE(word, '[.,]', ''), or
+# 2. Using ... JOIN JSON_TABLE() etc. + REGEXP_REPLACE()
+
+
+
+# 2.12 Titanic Survivors and Non-Survivors
+# https://platform.stratascratch.com/coding/9881-make-a-report-showing-the-number-of-survivors-and-non-survivors-by-passenger-class?code_type=2
+
+# Make a report showing the number of survivors and non-survivors by passenger class.
+# Classes are categorized based on the pclass column value.
+# Output the number of survivors and non-survivors by each class.
+
+
+# Python
+# ******
+# Solution #1 - Using Pandas.crosstab() - Simple
+import pandas as pd
+
+df_pivot = pd.crosstab(index=titanic["survived"], columns=titanic["pclass"]).reset_index().rename(columns={1: "1st_class", 2: "2nd_class", 3: "3rd_class"})
+
+
+# Solution #2 - Using .groupby().size() and then .pivot()
+import pandas as pd
+
+df_gr = titanic.groupby(by=["survived", "pclass"]).size().to_frame("count").reset_index()
+
+df_pivot = df_gr.pivot(index="survived", columns="pclass", values="count")
+df_pivot = df_pivot.reset_index().rename_axis(None, axis=1).rename(columns={1: "1st_class", 2: "2nd_class", 3: "3rd_class"})
+
+
+# MySQL
+# *****
+SELECT
+    survived,
+    SUM( CASE WHEN pclass = 1 THEN 1 END ) AS 1st_class,
+    SUM( CASE WHEN pclass = 2 THEN 1 END ) AS 2nd_class,
+    SUM( CASE WHEN pclass = 3 THEN 1 END ) AS 3rd_class
+FROM titanic
+GROUP BY survived
+ORDER BY survived;
