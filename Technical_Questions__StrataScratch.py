@@ -51,9 +51,11 @@
 #    2.10 Customer Revenue In March
 #    2.11 Count Occurrences Of Words In Drafts
 #    2.12 Titanic Survivors and Non-Survivors
-#    2.13 ***** In progress *****
-#    2.14 
-#    2.15 
+#    2.13 Second Highest Salary
+#    2.14 Employee and Manager Salaries
+#    2.15 ***** In progress *****
+#    2.16 
+#    2.17 
 
 # 3. Difficulty: Hard  (12 Questions)
 #    3.1 ***** In progress *****
@@ -1362,3 +1364,59 @@ SELECT
 FROM titanic
 GROUP BY survived
 ORDER BY survived;
+
+
+
+# 2.13 Second Highest Salary
+# https://platform.stratascratch.com/coding/9892-second-highest-salary?code_type=2
+
+# Find the second highest salary of employees.
+
+
+# Python
+# ******
+import pandas as pd
+
+employee = employee.assign(s_rank = employee["salary"].rank(method="dense", ascending=False))
+second_highest_salary = employee[employee["s_rank"].eq(2)][["salary"]].head(1)
+
+
+# MySQL
+# *****
+WITH cte_s_rank AS
+(
+SELECT
+    salary,
+    DENSE_RANK() OVER(ORDER BY salary DESC) AS s_rank
+FROM employee
+)
+SELECT DISTINCT salary AS second_highest_salary
+FROM cte_s_rank
+WHERE s_rank = 2;
+
+
+
+# 2.14 Employee and Manager Salaries
+# https://platform.stratascratch.com/coding/9894-employee-and-manager-salaries?code_type=2
+
+# Find employees who are earning more than their managers.
+# Output the employee's first name along with the corresponding salary.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = employee.merge(employee, how="left", left_on=["manager_id"], right_on=["id"], suffixes=("_L", "_R"))
+df[df["salary_L"].gt(df["salary_R"])][["first_name_L", "salary_L"]]
+
+
+# MySQL
+# *****
+SELECT
+    e1.first_name,
+    e1.salary
+FROM employee AS e1
+LEFT JOIN employee AS e2
+    ON e1.manager_id = e2.id
+WHERE e1.salary > e2.salary;
