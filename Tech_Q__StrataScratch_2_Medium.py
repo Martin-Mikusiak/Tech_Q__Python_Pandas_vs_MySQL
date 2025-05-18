@@ -277,7 +277,7 @@ sat_scores[sat_scores["sat_writing"].eq(sat_scores["sat_writing"].median())]["st
 
 # MySQL
 # *****
-# Unlike Python Pandas, MySQL has no built-in MEDIAN() function.
+# Unlike Python Pandas, MySQL has no built-in MEDIAN() function - it has to be calculated the "hard way" using 2 CTEs.
 WITH cte_row_nr AS
 (
 SELECT
@@ -393,7 +393,7 @@ import pandas as pd
 df = facebook_complaints.groupby(by="type", as_index=False).agg(processed_rate = ("processed", "mean")).round(2)
 
 
-# Solution #2
+# Solution #2 - The "hard way"
 import pandas as pd
 
 df = facebook_complaints.groupby(by="type", as_index=False).agg(
@@ -460,9 +460,9 @@ df_gr = df_words.groupby(by="word").size().to_frame("occurrences").reset_index()
 
 # MySQL
 # *****
-# Two possible complicated solutions:
+# There are two possible complicated solutions (not provided here):
 # 1. Using a RECURSIVE CTE and SUBSTRING_INDEX() & SUBSTRING() functions, UNION ALL etc. + REGEXP_REPLACE(word, '[.,]', ''), or
-# 2. Using ... JOIN JSON_TABLE() etc. + REGEXP_REPLACE()
+# 2. Using ... JOIN JSON_TABLE() etc. + REGEXP_REPLACE(...)
 
 
 
@@ -482,7 +482,7 @@ import pandas as pd
 df_pivot = pd.crosstab(index=titanic["survived"], columns=titanic["pclass"]).reset_index().rename(columns={1: "1st_class", 2: "2nd_class", 3: "3rd_class"})
 
 
-# Solution #2 - Using .groupby().size() and then .pivot()
+# Solution #2 - Using .groupby().size() and then .pivot() - The "hard way"
 import pandas as pd
 
 df_gr = titanic.groupby(by=["survived", "pclass"]).size().to_frame("count").reset_index()
