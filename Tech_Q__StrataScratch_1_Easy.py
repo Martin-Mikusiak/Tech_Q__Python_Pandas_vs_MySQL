@@ -4,8 +4,6 @@
 
 # My own solutions - both in Python Pandas and in MySQL
 
-# ***** In progress *****
-
 
 # Contents
 
@@ -39,29 +37,7 @@
 #    1.27 Workers With The Highest Salaries
 
 # 2. Difficulty: Medium  (41 Questions)
-#    2.1 Share of Active Users
-#    2.2 Premium Accounts
-#    2.3 Election Results
-#    2.4 Flags per Video
-#    2.5 User with Most Approved Flags
-#    2.6 Find Students At Median Writing
-#    2.7 Top 10 Songs 2010
-#    2.8 Classify Business Type
-#    2.9 Processed Ticket Rate By Type
-#    2.10 Customer Revenue In March
-#    2.11 Count Occurrences Of Words In Drafts
-#    2.12 Titanic Survivors and Non-Survivors
-#    2.13 Second Highest Salary
-#    2.14 Employee and Manager Salaries
-#    2.15 ***** In progress *****
-#    2.16 
-#    2.17 
-
-# 3. Difficulty: Hard  (12 Questions)
-#    3.1 ***** In progress *****
-#    3.2 
-#    3.3 
-#    3.4 
+# See the next file "Tech_Q__StrataScratch_2_Medium.py"
 
 
 
