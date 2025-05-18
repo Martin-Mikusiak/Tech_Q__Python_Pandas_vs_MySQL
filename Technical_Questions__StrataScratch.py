@@ -1407,7 +1407,7 @@ WHERE s_rank = 2;
 # ******
 import pandas as pd
 
-df = employee.merge(employee, how="left", left_on=["manager_id"], right_on=["id"], suffixes=("_L", "_R"))
+df = employee.merge(employee, how="left", left_on="manager_id", right_on="id", suffixes=("_L", "_R"))
 df[df["salary_L"].gt(df["salary_R"])][["first_name_L", "salary_L"]]
 
 
