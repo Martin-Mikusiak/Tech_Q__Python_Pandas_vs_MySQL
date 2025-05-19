@@ -28,8 +28,8 @@
 #    2.13 Second Highest Salary
 #    2.14 Employee and Manager Salaries
 #    2.15 Highest Salary In Department
-#    2.16 ***** In progress *****
-#    2.17 
+#    2.16 Highest Target Under Manager
+#    2.17 ***** In progress *****
 
 # 3. Difficulty: Hard  (12 Questions)
 #    3.1 ***** In progress *****
@@ -592,3 +592,32 @@ SELECT
     salary
 FROM cte_d_s_rank
 WHERE d_s_rank = 1;
+
+
+
+# 2.16 Highest Target Under Manager
+# https://platform.stratascratch.com/coding/9905-highest-target-under-manager?code_type=2
+
+# Identify the employee(s) working under manager manager_id=13 who have achieved the highest target.
+# Return each such employee’s first name alongside the target value.
+# The goal is to display the maximum target among all employees under manager_id=13 and show which employee(s) reached that top value.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = salesforce_employees[salesforce_employees["manager_id"].eq(13)][["first_name", "target"]]
+df[df["target"].eq(df["target"].max())]
+
+
+# MySQL
+# *****
+SELECT
+    first_name,
+    target
+FROM salesforce_employees
+WHERE 
+    manager_id = 13 AND
+    target = (SELECT MAX(target) FROM salesforce_employees WHERE manager_id = 13);
+
