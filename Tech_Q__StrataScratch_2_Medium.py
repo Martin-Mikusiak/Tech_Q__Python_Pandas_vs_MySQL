@@ -27,8 +27,8 @@
 #    2.12 Titanic Survivors and Non-Survivors
 #    2.13 Second Highest Salary
 #    2.14 Employee and Manager Salaries
-#    2.15 ***** In progress *****
-#    2.16 
+#    2.15 Highest Salary In Department
+#    2.16 ***** In progress *****
 #    2.17 
 
 # 3. Difficulty: Hard  (12 Questions)
@@ -557,3 +557,38 @@ FROM employee AS e1
 LEFT JOIN employee AS e2
     ON e1.manager_id = e2.id
 WHERE e1.salary > e2.salary;
+
+
+
+# 2.15 Highest Salary In Department
+# https://platform.stratascratch.com/coding/9897-highest-salary-in-department?code_type=2
+
+# Find the employee with the highest salary per department.
+# Output the department name, employee's first name along with the corresponding salary.
+
+
+# Python
+# ******
+import pandas as pd
+
+employee = employee.assign(d_s_rank = employee.groupby(by="department")["salary"].rank(method="dense", ascending=False))
+employee[employee["d_s_rank"].eq(1)][["department", "first_name", "salary"]].sort_values(by="department")
+
+
+# MySQL
+# *****
+WITH cte_d_s_rank AS
+(
+SELECT
+    department,
+    first_name,
+    salary,
+    DENSE_RANK() OVER(PARTITION BY department ORDER BY salary DESC) AS d_s_rank
+FROM employee
+)
+SELECT
+    department,
+    first_name,
+    salary
+FROM cte_d_s_rank
+WHERE d_s_rank = 1;
