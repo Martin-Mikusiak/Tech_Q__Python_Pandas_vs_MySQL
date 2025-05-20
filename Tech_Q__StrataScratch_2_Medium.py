@@ -29,7 +29,12 @@
 #    2.14 Employee and Manager Salaries
 #    2.15 Highest Salary In Department
 #    2.16 Highest Target Under Manager
-#    2.17 ***** In progress *****
+#    2.17 Highest Number Of Orders
+#    2.18 ***** In progress *****
+#    2.19 
+#    2.20 
+#    2.21 
+#    2.22 
 
 # 3. Difficulty: Hard  (12 Questions)
 #    3.1 ***** In progress *****
@@ -620,4 +625,36 @@ FROM salesforce_employees
 WHERE 
     manager_id = 13 AND
     target = (SELECT MAX(target) FROM salesforce_employees WHERE manager_id = 13);
+
+
+
+# 2.17 Highest Number Of Orders
+# https://platform.stratascratch.com/coding/9909-highest-number-of-orders?code_type=2
+
+# Find the customer who has placed the highest number of orders.
+# Output the id of the customer along with the corresponding number of orders.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_gr = orders.groupby(by="cust_id").size().to_frame("orders_count").reset_index().sort_values(by="orders_count", ascending=False)
+df_gr[df_gr["orders_count"].eq(df_gr["orders_count"].max())]
+
+
+# MySQL
+# *****
+WITH cte_orders_count AS
+(
+SELECT
+    cust_id,
+    COUNT(DISTINCT id) AS orders_count
+FROM orders
+GROUP BY cust_id
+ORDER BY orders_count DESC
+)
+SELECT *
+FROM cte_orders_count
+WHERE orders_count = (SELECT MAX(orders_count) FROM cte_orders_count);
 
