@@ -644,10 +644,10 @@ df_gr = orders.groupby(by="cust_id", as_index=False)["id"].nunique().rename(colu
 df_gr[df_gr["orders_count"].eq(df_gr["orders_count"].max())]
 
 
-# Solution #2 - Assuming that there are no duplicate rows
+# Solution #2
 import pandas as pd
 
-df_gr = orders.groupby(by="cust_id").size().to_frame("orders_count").reset_index().sort_values(by="orders_count", ascending=False)
+df_gr = orders.drop_duplicates().groupby(by="cust_id").size().to_frame("orders_count").reset_index().sort_values(by="orders_count", ascending=False)
 df_gr[df_gr["orders_count"].eq(df_gr["orders_count"].max())]
 
 
