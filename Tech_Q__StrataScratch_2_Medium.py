@@ -32,8 +32,8 @@
 #    2.17 Highest Number Of Orders
 #    2.18 Highest Cost Orders
 #    2.19 Largest Olympics
-#    2.20 ***** In progress *****
-#    2.21 
+#    2.20 Aroma-based Winery Search
+#    2.21 ***** In progress *****
 #    2.22 
 
 # 3. Difficulty: Hard  (12 Questions)
@@ -737,9 +737,32 @@ SELECT
 FROM olympics_athletes_events
 GROUP BY games
 )
-SELECT
-    games,
-    athletes_count
+SELECT *
 FROM cte_a_count
 WHERE athletes_count = (SELECT MAX(athletes_count) FROM cte_a_count);
+
+
+
+# 2.20 Aroma-based Winery Search
+# https://platform.stratascratch.com/coding/10026-find-all-wineries-which-produce-wines-by-possessing-aromas-of-plum-cherry-rose-or-hazelnut?code_type=2
+
+# Find wineries producing wines with aromas of plum, cherry, rose, or hazelnut (singular form only).
+# Substring matches, like plums, cherries should be excluded.
+
+
+# Python
+# ******
+import pandas as pd
+
+winemag_p1[
+    winemag_p1["description"].str.contains(r"\b(plum|cherry|rose|hazelnut)\b", case=False, regex=True)
+    ][["winery"]].drop_duplicates().sort_values(by="winery")
+
+
+# MySQL
+# *****
+SELECT DISTINCT winery
+FROM winemag_p1
+WHERE LOWER(description) REGEXP '\\b(plum|cherry|rose|hazelnut)\\b'
+ORDER BY winery;
 
