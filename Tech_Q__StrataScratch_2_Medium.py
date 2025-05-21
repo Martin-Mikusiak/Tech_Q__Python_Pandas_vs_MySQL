@@ -31,8 +31,8 @@
 #    2.16 Highest Target Under Manager
 #    2.17 Highest Number Of Orders
 #    2.18 Highest Cost Orders
-#    2.19 ***** In progress *****
-#    2.20 
+#    2.19 Largest Olympics
+#    2.20 ***** In progress *****
 #    2.21 
 #    2.22 
 
@@ -708,4 +708,38 @@ FROM cte_sum AS s
 JOIN customers AS c
     ON s.cust_id = c.id
 WHERE sum_order_cost = (SELECT MAX(sum_order_cost) FROM cte_sum);
+
+
+
+# 2.19 Largest Olympics
+# https://platform.stratascratch.com/coding/9942-largest-olympics?code_type=2
+
+# Find the Olympics with the highest number of unique athletes.
+# The Olympics game is a combination of the year and the season, and is found in the games column.
+# Output the Olympics along with the corresponding number of athletes. The id column uniquely identifies an athlete.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = olympics_athletes_events.groupby(by="games", as_index=False)["id"].nunique().rename(columns={"id": "athletes_count"})
+df.nlargest(1, "athletes_count", keep="all")
+
+
+# MySQL
+# *****
+WITH cte_a_count AS
+(
+SELECT
+    games,
+    COUNT(DISTINCT id) AS athletes_count
+FROM olympics_athletes_events
+GROUP BY games
+)
+SELECT
+    games,
+    athletes_count
+FROM cte_a_count
+WHERE athletes_count = (SELECT MAX(athletes_count) FROM cte_a_count);
 
