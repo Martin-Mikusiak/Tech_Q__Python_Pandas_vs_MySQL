@@ -30,8 +30,8 @@
 #    2.15 Highest Salary In Department
 #    2.16 Highest Target Under Manager
 #    2.17 Highest Number Of Orders
-#    2.18 ***** In progress *****
-#    2.19 
+#    2.18 Highest Cost Orders
+#    2.19 ***** In progress *****
 #    2.20 
 #    2.21 
 #    2.22 
@@ -665,4 +665,47 @@ ORDER BY orders_count DESC
 SELECT *
 FROM cte_orders_count
 WHERE orders_count = (SELECT MAX(orders_count) FROM cte_orders_count);
+
+
+
+# 2.18 Highest Cost Orders
+# https://platform.stratascratch.com/coding/9915-highest-cost-orders?code_type=2
+
+# Find the customer with the highest daily total order cost between 2019-02-01 to 2019-05-01.
+# If a customer had more than one order on a certain day, sum the order costs on daily basis.
+# Output customer's first name, total cost of their items, and the date.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_gr = orders[orders["order_date"].between("2019-02-01", "2019-05-01")].groupby(["order_date", "cust_id"], as_index=False)["total_order_cost"].sum()
+
+df_mrg = df_gr.merge(customers, left_on="cust_id", right_on="id")[["order_date", "cust_id", "total_order_cost", "first_name"]]
+
+df_mrg[df_mrg["total_order_cost"].eq(df_mrg["total_order_cost"].max())][["first_name", "order_date", "total_order_cost"]]
+
+
+# MySQL
+# *****
+WITH cte_sum AS
+(
+SELECT
+    order_date,
+    cust_id,
+    SUM(total_order_cost) AS sum_order_cost
+FROM orders
+WHERE order_date BETWEEN '2019-02-01' AND '2019-05-01'
+GROUP BY order_date, cust_id
+ORDER BY order_date, cust_id
+)
+SELECT
+    first_name,
+    order_date,
+    sum_order_cost
+FROM cte_sum AS s
+JOIN customers AS c
+    ON s.cust_id = c.id
+WHERE sum_order_cost = (SELECT MAX(sum_order_cost) FROM cte_sum);
 
