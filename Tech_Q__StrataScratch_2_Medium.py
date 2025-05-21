@@ -33,8 +33,13 @@
 #    2.18 Highest Cost Orders
 #    2.19 Largest Olympics
 #    2.20 Aroma-based Winery Search
-#    2.21 ***** In progress *****
-#    2.22 
+#    2.21 Top Businesses With Most Reviews
+#    2.22 ***** In progress *****
+#    2.23 
+#    2.24 
+#    2.25 
+#    2.26 
+#    2.27 
 
 # 3. Difficulty: Hard  (12 Questions)
 #    3.1 ***** In progress *****
@@ -765,4 +770,37 @@ SELECT DISTINCT winery
 FROM winemag_p1
 WHERE LOWER(description) REGEXP '\\b(plum|cherry|rose|hazelnut)\\b'
 ORDER BY winery;
+
+
+
+# 2.21 Top Businesses With Most Reviews
+# https://platform.stratascratch.com/coding/10048-top-businesses-with-most-reviews?code_type=2
+
+# Find the top 5 businesses with most reviews.
+# Assume that each row has a unique business_id such that the total reviews for each business is listed on each row.
+# Output the business name along with the total number of reviews and order your results by the total reviews in descending order.
+
+
+# Python
+# ******
+import pandas as pd
+
+yelp_business.nlargest(5, "review_count", keep="all")[["name", "review_count"]]
+
+
+# MySQL
+# *****
+WITH cte_d_rank AS
+(
+SELECT
+    name,
+    review_count,
+    DENSE_RANK() OVER(ORDER BY review_count DESC) AS d_rank
+FROM yelp_business
+)
+SELECT
+    name,
+    review_count
+FROM cte_d_rank
+WHERE d_rank <= 5;
 
