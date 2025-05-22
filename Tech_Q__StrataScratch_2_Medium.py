@@ -35,11 +35,13 @@
 #    2.20 Aroma-based Winery Search
 #    2.21 Top Businesses With Most Reviews
 #    2.22 Reviews of Categories
-#    2.23 ***** In progress *****
-#    2.24 
-#    2.25 
+#    2.23 Top Cool Votes
+#    2.24 Income By Title and Gender
+#    2.25 ***** In progress *****
 #    2.26 
 #    2.27 
+#    2.28 
+
 
 # 3. Difficulty: Hard  (12 Questions)
 #    3.1 ***** In progress *****
@@ -852,3 +854,68 @@ FROM cte_ctgr
 GROUP BY category
 ORDER BY sum_review_count DESC;
 
+
+
+# 2.23 Top Cool Votes
+# https://platform.stratascratch.com/coding/10060-top-cool-votes?code_type=2
+
+# Find the review_text that received the highest number of  cool votes.
+# Output the business name along with the review text with the highest number of cool votes.
+
+
+# Python
+# ******
+import pandas as pd
+
+yelp_reviews[yelp_reviews["cool"].eq(yelp_reviews["cool"].max())][["business_name", "review_text"]]
+
+
+# MySQL
+# *****
+SELECT
+    business_name,
+    review_text
+FROM yelp_reviews
+WHERE cool = (SELECT MAX(cool) FROM yelp_reviews);
+
+
+
+# 2.24 Income By Title and Gender
+# https://platform.stratascratch.com/coding/10077-income-by-title-and-gender?code_type=2
+
+# Find the average total compensation based on employee titles and gender.
+# Total compensation is calculated by adding both the salary and bonus of each employee.
+# However, not every employee receives a bonus so disregard employees without bonuses in your calculation.
+# Employee can receive more than one bonus.
+
+
+# Python
+# ******
+import pandas as pd
+
+bonus_gr = sf_bonus.groupby(by="worker_ref_id")["bonus"].sum().to_frame("bonus_sum").reset_index()
+
+df = sf_employee.merge(bonus_gr, left_on="id", right_on="worker_ref_id")
+df = df.assign(total_comp = df["salary"] + df["bonus_sum"])
+
+df_gr = df.groupby(by=["employee_title", "sex"])["total_comp"].mean().to_frame("avg_total_comp").reset_index()
+
+
+# MySQL
+# *****
+WITH cte_bonus_gr AS
+(
+SELECT
+    worker_ref_id,
+    SUM(bonus) AS bonus_sum
+FROM sf_bonus
+GROUP BY worker_ref_id
+)
+SELECT
+    employee_title,
+    sex,
+    AVG(salary + bonus_sum) AS avg_total_comp
+FROM sf_employee AS e
+JOIN cte_bonus_gr AS b
+    ON e.id = b.worker_ref_id
+GROUP BY employee_title, sex;
