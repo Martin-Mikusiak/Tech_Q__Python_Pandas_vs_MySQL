@@ -37,8 +37,8 @@
 #    2.22 Reviews of Categories
 #    2.23 Top Cool Votes
 #    2.24 Income By Title and Gender
-#    2.25 ***** In progress *****
-#    2.26 
+#    2.25 Matching Similar Hosts and Guests
+#    2.26 ***** In progress *****
 #    2.27 
 #    2.28 
 
@@ -919,3 +919,29 @@ FROM sf_employee AS e
 JOIN cte_bonus_gr AS b
     ON e.id = b.worker_ref_id
 GROUP BY employee_title, sex;
+
+
+
+# 2.25 Matching Similar Hosts and Guests
+# https://platform.stratascratch.com/coding/10078-find-matching-hosts-and-guests-in-a-way-that-they-are-both-of-the-same-gender-and-nationality?code_type=2
+
+# Find matching hosts and guests pairs in a way that they are both of the same gender and nationality.
+# Output the host id and the guest id of matched pair.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_m = airbnb_hosts.drop_duplicates().merge(airbnb_guests.drop_duplicates(), on=["nationality", "gender"])[["host_id", "guest_id"]]
+
+
+# MySQL
+# *****
+SELECT DISTINCT
+    host_id,
+    guest_id
+FROM airbnb_hosts AS h
+JOIN airbnb_guests AS g
+    ON h.nationality = g.nationality AND
+    h.gender = g.gender;
