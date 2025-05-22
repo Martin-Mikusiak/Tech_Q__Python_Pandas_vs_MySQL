@@ -34,8 +34,8 @@
 #    2.19 Largest Olympics
 #    2.20 Aroma-based Winery Search
 #    2.21 Top Businesses With Most Reviews
-#    2.22 ***** In progress *****
-#    2.23 
+#    2.22 Reviews of Categories
+#    2.23 ***** In progress *****
 #    2.24 
 #    2.25 
 #    2.26 
@@ -814,4 +814,41 @@ SELECT
     review_count
 FROM cte_d_rank
 WHERE d_rank <= 5;
+
+
+
+# 2.22 Reviews of Categories
+# https://platform.stratascratch.com/coding/10049-reviews-of-categories?code_type=2
+
+# Calculate number of reviews for every business category.
+# Output the category along with the total number of reviews.
+# Order by total reviews in descending order.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = yelp_business[["review_count", "categories"]]
+df = df.assign(ctgr = df["categories"].str.split(";")).explode("ctgr")
+
+df_gr = df.groupby(by="ctgr", as_index=False)["review_count"].sum().sort_values(by="review_count", ascending=False)
+
+
+# MySQL
+# *****
+WITH cte_ctgr AS
+(
+SELECT 
+    ctgr,
+    review_count
+FROM yelp_business,
+JSON_TABLE( CONCAT('["', REPLACE(categories, ';', '","'), '"]'), "$[*]" COLUMNS (ctgr VARCHAR(100) PATH "$") ) AS jt
+)
+SELECT
+    ctgr AS category,
+    SUM(review_count) AS sum_review_count
+FROM cte_ctgr
+GROUP BY category
+ORDER BY sum_review_count DESC;
 
