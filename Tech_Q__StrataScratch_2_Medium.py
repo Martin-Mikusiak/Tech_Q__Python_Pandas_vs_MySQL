@@ -38,8 +38,8 @@
 #    2.23 Top Cool Votes
 #    2.24 Income By Title and Gender
 #    2.25 Matching Similar Hosts and Guests
-#    2.26 ***** In progress *****
-#    2.27 
+#    2.26 Find the percentage of shipable orders
+#    2.27 ***** In progress *****
 #    2.28 
 
 
@@ -945,3 +945,30 @@ FROM airbnb_hosts AS h
 JOIN airbnb_guests AS g
     ON h.nationality = g.nationality AND
     h.gender = g.gender;
+
+
+
+# 2.26 Find the percentage of shipable orders
+# https://platform.stratascratch.com/coding/10090-find-the-percentage-of-shipable-orders?code_type=2
+
+# Find the percentage of shipable orders.
+# Consider an order is shipable if the customer's address is known.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = orders.merge(customers[["id", "address"]], left_on="cust_id", right_on="id")
+
+pct_shipable = df[df["address"].notna()].shape[0] / df.shape[0] * 100
+
+
+# MySQL
+# *****
+SELECT
+    COUNT(address) / (SELECT COUNT(*) FROM orders) * 100 AS pct_shipable
+FROM orders AS o
+JOIN customers AS c
+    ON o.cust_id = c.id
+WHERE address IS NOT NULL;
