@@ -465,7 +465,7 @@ ORDER BY total_revenue DESC;
 # ******
 import pandas as pd
 
-df_words = google_file_store["contents"].str.lower().str.split().explode().str.replace(r"[.,]", "", regex=True).to_frame("word")
+df_words = google_file_store["contents"].str.lower().str.split().explode().str.replace(r"[.,!?]", "", regex=True).to_frame("word")
 
 df_gr = df_words.groupby(by="word").size().to_frame("occurrences").reset_index().sort_values(by=["occurrences", "word"], ascending=[False, True])
 
@@ -475,7 +475,7 @@ df_gr = df_words.groupby(by="word").size().to_frame("occurrences").reset_index()
 WITH cte_cl_words AS
 (
 SELECT
-    LOWER( TRIM( REGEXP_REPLACE(jt.word, '[.,]', '') ) ) AS cl_word
+    LOWER( TRIM( REGEXP_REPLACE(jt.word, '[.,!?]', '') ) ) AS cl_word
 FROM google_file_store,    
 JSON_TABLE( CONCAT('["', REPLACE(contents, ' ', '","'), '"]'), "$[*]" COLUMNS (word VARCHAR(100) PATH "$") ) AS jt
 WHERE contents IS NOT NULL
