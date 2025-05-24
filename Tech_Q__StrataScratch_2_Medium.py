@@ -39,8 +39,8 @@
 #    2.24 Income By Title and Gender
 #    2.25 Matching Similar Hosts and Guests
 #    2.26 Find the percentage of shipable orders
-#    2.27 ***** In progress *****
-#    2.28 
+#    2.27 Spam Posts
+#    2.28 ***** In progress *****
 
 
 # 3. Difficulty: Hard  (12 Questions)
@@ -972,3 +972,43 @@ FROM orders AS o
 JOIN customers AS c
     ON o.cust_id = c.id
 WHERE address IS NOT NULL;
+
+
+
+# 2.27 Spam Posts
+# https://platform.stratascratch.com/coding/10134-spam-posts?code_type=2
+
+# Calculate the percentage of spam posts in all viewed posts by day.
+# A post is considered a spam if a string "spam" is inside keywords of the post.
+# Note that the facebook_posts table stores all posts posted by users.
+# The facebook_post_views table is an action table denoting if a user has viewed a post.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = facebook_posts[facebook_posts["post_id"].isin(facebook_post_views["post_id"])].assign(spam_pctg = 0)
+df["spam_pctg"] = df["spam_pctg"].mask(df["post_keywords"].str.contains("spam", case=False, regex=False), 100)
+
+df_gr = df.groupby(by="post_date", as_index=False)["spam_pctg"].mean()
+
+
+# MySQL
+# *****
+WITH cte_spam AS
+(
+SELECT DISTINCT
+    p.post_id,
+    post_date,
+    CASE WHEN LOWER(post_keywords) LIKE '%spam%' THEN 100 ELSE 0 END AS spam_value
+FROM facebook_posts AS p
+JOIN facebook_post_views AS v
+    ON p.post_id = v.post_id
+)
+SELECT
+    post_date,
+    AVG(spam_value) AS spam_pctg
+FROM cte_spam
+GROUP BY post_date
+ORDER BY post_date;
