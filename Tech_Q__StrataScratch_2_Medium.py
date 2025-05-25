@@ -40,7 +40,12 @@
 #    2.25 Matching Similar Hosts and Guests
 #    2.26 Find the percentage of shipable orders
 #    2.27 Spam Posts
-#    2.28 ***** In progress *****
+#    2.28 Apple Product Counts
+#    2.29 ***** In progress *****
+#    2.30 
+#    2.31 
+#    2.32 
+#    2.33 
 
 
 # 3. Difficulty: Hard  (12 Questions)
@@ -1012,3 +1017,54 @@ SELECT
 FROM cte_spam
 GROUP BY post_date
 ORDER BY post_date;
+
+
+
+# 2.28 Apple Product Counts
+# https://platform.stratascratch.com/coding/10141-apple-product-counts?code_type=2
+
+# We’re analyzing user data to understand how popular Apple devices are among users who have performed at least one event on the platform.
+# Specifically, we want to measure this popularity across different languages.
+# Count the number of distinct users using Apple devices —limited to "macbook pro", "iphone 5s", and "ipad air" —
+# and compare it to the total number of users per language.
+# Present the results with the language, the number of Apple users, and the total number of users for each language.
+# Finally, sort the results so that languages with the highest total user count appear first.
+
+
+# Python
+# ******
+import pandas as pd
+
+apple_device_list = ["macbook pro", "iphone 5s", "ipad air"]
+
+playbook_events = playbook_events.assign(apple_device = 0)
+playbook_events["apple_device"] = playbook_events["apple_device"].mask(playbook_events["device"].isin(apple_device_list), 1)
+
+df = playbook_events.merge(playbook_users, how="left", on="user_id")[["user_id", "apple_device", "language"]].drop_duplicates().sort_values(by="user_id")
+
+df_gr = df.groupby(by="language", as_index=False).agg(
+    apple_users_count = ("apple_device", "sum"),
+    total_users_count = ("user_id", "nunique")
+    ).sort_values(by="total_users_count", ascending=False)
+
+
+# MySQL
+# *****
+WITH cte_merged AS
+(
+SELECT DISTINCT
+    e.user_id,
+    CASE WHEN device IN ('macbook pro', 'iphone 5s', 'ipad air') THEN 1 ELSE 0 END AS apple_device,
+    language
+FROM playbook_events AS e
+LEFT JOIN playbook_users AS u
+    ON e.user_id = u.user_id
+ORDER BY user_id
+)
+SELECT
+    language,
+    SUM(apple_device) AS apple_users_count,
+    COUNT(DISTINCT user_id) AS total_users_count
+FROM cte_merged
+GROUP BY language
+ORDER BY total_users_count DESC;
