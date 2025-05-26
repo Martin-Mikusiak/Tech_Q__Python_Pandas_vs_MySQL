@@ -41,8 +41,8 @@
 #    2.26 Find the percentage of shipable orders
 #    2.27 Spam Posts
 #    2.28 Apple Product Counts
-#    2.29 ***** In progress *****
-#    2.30 
+#    2.29 No Order Customers
+#    2.30 ***** In progress *****
 #    2.31 
 #    2.32 
 #    2.33 
@@ -1068,3 +1068,51 @@ SELECT
 FROM cte_merged
 GROUP BY language
 ORDER BY total_users_count DESC;
+
+
+
+# 2.29 No Order Customers
+# https://platform.stratascratch.com/coding/10142-no-order-customers?code_type=2
+
+# Identify customers who did not place an order between 2019-02-01 and 2019-03-01.
+# Include:
+# - Customers who placed orders only outside this date range.
+# - Customers who never placed any orders.
+# Output the customers' first names.
+
+
+# Python
+# ******
+# Solution #1 - Simple
+import pandas as pd
+
+df_inside = orders[orders["order_date"].between("2019-02-01", "2019-03-01")]["cust_id"].drop_duplicates()
+
+df_mrg = customers.merge(df_inside, how="left", left_on="id", right_on="cust_id")
+
+df_outside_or_never = df_mrg[df_mrg["cust_id"].isna()][["first_name"]]
+
+
+# Solution #2 - More complicated
+import pandas as pd
+
+df_mrg = customers.merge(orders, how="left", left_on="id", right_on="cust_id")[["id_x", "first_name", "order_date"]]
+
+df_inside = df_mrg[df_mrg["order_date"].between("2019-02-01", "2019-03-01")]
+
+df_outside_or_never = df_mrg[~df_mrg["id_x"].isin(df_inside["id_x"])][["id_x", "first_name"]].drop_duplicates()[["first_name"]]
+
+
+# MySQL
+# *****
+WITH cte_inside AS
+(
+SELECT DISTINCT cust_id
+FROM orders
+WHERE order_date BETWEEN '2019-02-01' AND '2019-03-01'
+)
+SELECT first_name
+FROM customers
+LEFT JOIN cte_inside
+    ON id = cust_id
+WHERE cust_id IS NULL;
