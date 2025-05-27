@@ -45,8 +45,8 @@
 #    2.30 Number Of Units Per Nationality
 #    2.31 Ranking Most Active Guests
 #    2.32 Number of Streets Per Zip Code
-#    2.33 ***** In progress *****
-#    2.34 
+#    2.33 Acceptance Rate By Date
+#    2.34 ***** In progress *****
 #    2.35 
 
 
@@ -1232,3 +1232,54 @@ SELECT
 FROM cte_street_1st_word
 GROUP BY business_postal_code
 ORDER BY streets_count DESC, business_postal_code;
+
+
+
+# 2.33 Acceptance Rate By Date
+# https://platform.stratascratch.com/coding/10285-acceptance-rate-by-date?code_type=2
+
+# Calculate the friend acceptance rate for each date when friend requests were sent.
+# A request is sent if action = sent and accepted if action = accepted.
+# If a request is not accepted, there is no record of it being accepted in the table.
+# The output will only include dates where requests were sent and at least one of them was accepted,
+# as the acceptance rate can only be calculated for those dates.
+# Show the results ordered from the earliest to the latest date.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_s = fb_friend_requests[fb_friend_requests["action"].eq("sent")]
+
+df_a = fb_friend_requests[fb_friend_requests["action"].eq("accepted")]
+
+df_mrg = df_s.merge(df_a, how="left", on=["user_id_sender", "user_id_receiver"], suffixes=["_s", "_a"]).sort_values(by="date_s").assign(acc = 0)
+
+df_mrg["acc"] = df_mrg["acc"].mask(df_mrg["action_a"].eq("accepted"), 1)
+
+df_gr = df_mrg.groupby(by="date_s", as_index=False).agg(acceptance_rate = ("acc", "mean"))
+
+
+# MySQL
+# *****
+WITH cte_s AS
+(
+SELECT *
+FROM fb_friend_requests
+WHERE action = 'sent'
+),
+cte_a AS
+(
+SELECT *
+FROM fb_friend_requests
+WHERE action = 'accepted'
+)
+SELECT
+    s.date AS date_s,
+    COUNT(a.action) / COUNT(*) AS acceptance_rate
+FROM cte_s AS s
+LEFT JOIN cte_a AS a
+    USING (user_id_sender, user_id_receiver)
+GROUP BY date_s
+ORDER BY date_s;
