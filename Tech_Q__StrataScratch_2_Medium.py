@@ -43,16 +43,18 @@
 #    2.28 Apple Product Counts
 #    2.29 No Order Customers
 #    2.30 Number Of Units Per Nationality
-#    2.31 ***** In progress *****
-#    2.32 
-#    2.33 
+#    2.31 Ranking Most Active Guests
+#    2.32 Number of Streets Per Zip Code
+#    2.33 ***** In progress *****
+#    2.34 
+#    2.35 
+
 
 
 # 3. Difficulty: Hard  (12 Questions)
 #    3.1 ***** In progress *****
 #    3.2 
 #    3.3 
-#    3.4 
 
 
 
@@ -1151,3 +1153,82 @@ WHERE
     unit_type = 'Apartment'
 GROUP BY nationality
 ORDER BY apartment_count DESC;
+
+
+
+# 2.31 Ranking Most Active Guests
+# https://platform.stratascratch.com/coding/10159-ranking-most-active-guests?code_type=2
+
+# Identify the most engaged guests by ranking them according to their overall messaging activity.
+# The most active guest, meaning the one who has exchanged the most messages with hosts, should have the highest rank.
+# If two or more guests have the same number of messages, they should have the same rank.
+# Importantly, the ranking shouldn't skip any numbers, even if many guests share the same rank.
+# Present your results in a clear format, showing the rank, guest identifier, and total number of messages for each guest,
+# ordered from the most to least active.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_gr = airbnb_contacts.groupby(by="id_guest")["n_messages"].sum().to_frame("n_messages_sum").reset_index()
+
+df_gr = df_gr.assign(ranking = df_gr["n_messages_sum"].rank(method="dense", ascending=False)).sort_values(by=["ranking", "id_guest"])
+
+
+# MySQL
+# *****
+SELECT
+    id_guest,
+    SUM(n_messages) AS n_messages_sum,
+    DENSE_RANK() OVER(ORDER BY SUM(n_messages) DESC) AS ranking
+FROM airbnb_contacts
+GROUP BY id_guest
+ORDER BY ranking, id_guest;
+
+
+
+# 2.32 Number of Streets Per Zip Code
+# https://platform.stratascratch.com/coding/10182-number-of-streets-per-zip-code?code_type=2
+
+# Count the number of unique street names for each postal code in the business dataset.
+# Use only the first word of the street name, case insensitive (e.g., "FOLSOM" and "Folsom" are the same).
+# If the structure is reversed (e.g., "Pier 39" and "39 Pier"), count them as the same street.
+# Output the results with postal codes, ordered by the number of streets (descending) and postal code (ascending).
+
+
+# Python
+# ******
+import pandas as pd
+
+df = sf_restaurant_health_violations[sf_restaurant_health_violations["business_postal_code"].notna()][["business_postal_code", "business_address"]]
+
+df = df.assign(street_1st_word = df["business_address"].str.lower().str.replace("'", "").str.extract(r"(?:^\s*\d+[\w\-]*\s+)?(\b\w+\b)"))
+
+df_gr = df.groupby(by="business_postal_code")["street_1st_word"].nunique().to_frame("streets_count").reset_index()
+df_gr.sort_values(by=["streets_count", "business_postal_code"], ascending=[False, True])
+
+
+# MySQL
+# *****
+WITH cte_address_clean AS
+(
+SELECT
+    business_postal_code,
+    LOWER( REPLACE(business_address, "'", "") ) AS address_clean
+FROM sf_restaurant_health_violations
+WHERE business_postal_code IS NOT NULL
+),
+cte_street_1st_word AS
+(
+SELECT
+    business_postal_code,
+    SUBSTRING_INDEX( TRIM( REGEXP_REPLACE(address_clean, '^\\s*\\d+[\\w-]*\\s+', '') ), ' ', 1 ) AS street_1st_word
+FROM cte_address_clean
+)
+SELECT
+    business_postal_code,
+    COUNT(DISTINCT street_1st_word) AS streets_count
+FROM cte_street_1st_word
+GROUP BY business_postal_code
+ORDER BY streets_count DESC, business_postal_code;
