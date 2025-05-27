@@ -38,12 +38,12 @@
 #    2.23 Top Cool Votes
 #    2.24 Income By Title and Gender
 #    2.25 Matching Similar Hosts and Guests
-#    2.26 Find the percentage of shipable orders
+#    2.26 Find the Percentage of Shipable Orders
 #    2.27 Spam Posts
 #    2.28 Apple Product Counts
 #    2.29 No Order Customers
-#    2.30 ***** In progress *****
-#    2.31 
+#    2.30 Number Of Units Per Nationality
+#    2.31 ***** In progress *****
 #    2.32 
 #    2.33 
 
@@ -269,7 +269,7 @@ SELECT
     COUNT(DISTINCT video_id) AS videos_count
 FROM user_flags AS uf
 JOIN flag_review AS fr
-    ON uf.flag_id = fr.flag_id
+    USING (flag_id)
 WHERE LOWER(reviewed_outcome) = 'approved'
 GROUP BY user_fullname
 )
@@ -946,14 +946,13 @@ df_m = airbnb_hosts.drop_duplicates().merge(airbnb_guests.drop_duplicates(), on=
 SELECT DISTINCT
     host_id,
     guest_id
-FROM airbnb_hosts AS h
-JOIN airbnb_guests AS g
-    ON h.nationality = g.nationality AND
-    h.gender = g.gender;
+FROM airbnb_hosts
+JOIN airbnb_guests
+    USING (nationality, gender);
 
 
 
-# 2.26 Find the percentage of shipable orders
+# 2.26 Find the Percentage of Shipable Orders
 # https://platform.stratascratch.com/coding/10090-find-the-percentage-of-shipable-orders?code_type=2
 
 # Find the percentage of shipable orders.
@@ -1009,7 +1008,7 @@ SELECT DISTINCT
     CASE WHEN LOWER(post_keywords) LIKE '%spam%' THEN 100 ELSE 0 END AS spam_value
 FROM facebook_posts AS p
 JOIN facebook_post_views AS v
-    ON p.post_id = v.post_id
+    USING (post_id)
 )
 SELECT
     post_date,
@@ -1058,7 +1057,7 @@ SELECT DISTINCT
     language
 FROM playbook_events AS e
 LEFT JOIN playbook_users AS u
-    ON e.user_id = u.user_id
+    USING (user_id)
 ORDER BY user_id
 )
 SELECT
@@ -1116,3 +1115,39 @@ FROM customers
 LEFT JOIN cte_inside
     ON id = cust_id
 WHERE cust_id IS NULL;
+
+
+
+# 2.30 Number Of Units Per Nationality
+# https://platform.stratascratch.com/coding/10156-number-of-units-per-nationality?code_type=2
+
+# We have data on rental properties and their owners.
+# Write a query that figures out how many different apartments (use unit_id) are owned by people under 30, broken down by their nationality.
+# We want to see which nationality owns the most apartments, so make sure to sort the results accordingly.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = airbnb_units.merge(airbnb_hosts.drop_duplicates(), how="left", on="host_id")[["unit_id", "unit_type", "nationality", "age"]]
+
+df_gr = df[
+    df["age"].lt(30) & 
+    df["unit_type"].eq("Apartment")
+    ].groupby(by="nationality")["unit_id"].nunique().to_frame("apartment_count").reset_index().sort_values(by="apartment_count", ascending=False)
+
+
+# MySQL
+# *****
+SELECT
+    nationality,
+    COUNT(DISTINCT unit_id) AS apartment_count
+FROM airbnb_units
+LEFT JOIN (SELECT DISTINCT * FROM airbnb_hosts) AS h
+    USING (host_id)
+WHERE
+    age < 30 AND
+    unit_type = 'Apartment'
+GROUP BY nationality
+ORDER BY apartment_count DESC;
