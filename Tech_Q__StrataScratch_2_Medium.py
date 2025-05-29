@@ -1323,9 +1323,9 @@ df_pctg = df_pctg[df_pctg.columns[::-1]]
 # Solution #3 - Using .value_counts()
 import pandas as pd
 
-df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3)]["clicked"].value_counts().reset_index()
+df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3)]["clicked"].value_counts().to_frame("cl_count")
 
-df_pctg = df_cl_counts.T.rename(columns={0: "top_3_clicked", 1: "top_3_notclicked"}).iloc[1:].reset_index(drop=True) / fb_search_events.shape[0] * 100
+df_pctg = df_cl_counts.T.reset_index(drop=True).rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
 
 
 # Solution #4 - Using .mean() from the values 0 or 100
