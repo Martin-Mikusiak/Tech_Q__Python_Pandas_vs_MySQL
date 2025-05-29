@@ -1313,19 +1313,18 @@ df_pctg = pd.DataFrame({
 # Solution #2 - Using .groupby()
 import pandas as pd
 
-df_gr = fb_search_events[fb_search_events["search_results_position"].le(3)].groupby(by="clicked").size().to_frame("cl_count")
+df_gr = fb_search_events[fb_search_events["search_results_position"].le(3)].groupby(by="clicked").size().to_frame().T
 
-df_pctg = df_gr.T.reset_index(drop=True).rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
-
+df_pctg = df_gr.rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
 df_pctg = df_pctg[df_pctg.columns[::-1]]
 
 
 # Solution #3 - Using .value_counts()
 import pandas as pd
 
-df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3)]["clicked"].value_counts().to_frame("cl_count")
+df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3)]["clicked"].value_counts().to_frame().T
 
-df_pctg = df_cl_counts.T.reset_index(drop=True).rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
+df_pctg = df_cl_counts.rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
 
 
 # Solution #4 - Using .mean() from the values of 0 or 100
