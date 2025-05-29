@@ -1297,7 +1297,7 @@ ORDER BY date_s;
 
 # Python
 # ******
-# Solution #1 - Using calculated variables and inserting them into a new DataFrame
+# Solution #1 - Using calculated results stored in variables and inserting them into a new DataFrame
 import pandas as pd
 
 t3_cl = fb_search_events[fb_search_events["clicked"].eq(1) & fb_search_events["search_results_position"].le(3)].shape[0] / fb_search_events.shape[0] * 100
@@ -1305,7 +1305,7 @@ t3_cl = fb_search_events[fb_search_events["clicked"].eq(1) & fb_search_events["s
 t3_nc = fb_search_events[fb_search_events["clicked"].eq(0) & fb_search_events["search_results_position"].le(3)].shape[0] / fb_search_events.shape[0] * 100
 
 df_pctg = pd.DataFrame({
-    "top_3_clicked":    [t3_cl],
+    "top_3_clicked"   : [t3_cl],
     "top_3_notclicked": [t3_nc]
     })
 
@@ -1328,14 +1328,14 @@ df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3
 df_pctg = df_cl_counts.T.reset_index(drop=True).rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
 
 
-# Solution #4 - Using .mean() from the values 0 or 100
+# Solution #4 - Using .mean() from the values of 0 or 100
 import pandas as pd
 
-df = fb_search_events.assign(t3_cl = 0, t3_nc = 0)[["clicked", "search_results_position", "t3_cl", "t3_nc"]]
-df["t3_cl"] = df["t3_cl"].mask(df["clicked"].eq(1) & df["search_results_position"].le(3), 100)
-df["t3_nc"] = df["t3_nc"].mask(df["clicked"].eq(0) & df["search_results_position"].le(3), 100)
+df = fb_search_events.assign(top_3_clicked = 0, top_3_notclicked = 0)[["clicked", "search_results_position", "top_3_clicked", "top_3_notclicked"]]
+df["top_3_clicked"   ] = df["top_3_clicked"   ].mask(df["clicked"].eq(1) & df["search_results_position"].le(3), 100)
+df["top_3_notclicked"] = df["top_3_notclicked"].mask(df["clicked"].eq(0) & df["search_results_position"].le(3), 100)
 
-df_pctg = df[["t3_cl", "t3_nc"]].mean().reset_index().T.rename(columns={0: "top_3_clicked", 1: "top_3_notclicked"}).iloc[1:].reset_index(drop=True)
+df_pctg = df[["top_3_clicked", "top_3_notclicked"]].mean().to_frame().T
 
 
 # MySQL
