@@ -46,8 +46,8 @@
 #    2.31 Ranking Most Active Guests
 #    2.32 Number of Streets Per Zip Code
 #    2.33 Acceptance Rate By Date
-#    2.34 ***** In progress *****
-#    2.35 
+#    2.34 Clicked Vs Non-Clicked Search Results
+#    2.35 ***** In progress *****
 
 
 
@@ -1283,3 +1283,65 @@ LEFT JOIN cte_a AS a
     USING (user_id_sender, user_id_receiver)
 GROUP BY date_s
 ORDER BY date_s;
+
+
+
+# 2.34 Clicked Vs Non-Clicked Search Results
+# https://platform.stratascratch.com/coding/10288-clicked-vs-non-clicked-search-results?code_type=2
+
+# The question asks you to calculate two percentages based on search results.
+# First, find the percentage of all search records clicked (clicked = 1) and in the top 3 positions.
+# Second, find the percentage of all search records that were not clicked (clicked = 0) but in the top 3 positions.
+# Both percentages are calculated with respect to the total number of search records and should be output in the same row as two columns.
+
+
+# Python
+# ******
+# Solution #1 - Using calculated variables and inserting them into a new DataFrame
+import pandas as pd
+
+t3_cl = fb_search_events[fb_search_events["clicked"].eq(1) & fb_search_events["search_results_position"].le(3)].shape[0] / fb_search_events.shape[0] * 100
+
+t3_nc = fb_search_events[fb_search_events["clicked"].eq(0) & fb_search_events["search_results_position"].le(3)].shape[0] / fb_search_events.shape[0] * 100
+
+df_pctg = pd.DataFrame({
+    "top_3_clicked":    [t3_cl],
+    "top_3_notclicked": [t3_nc]
+    })
+
+
+# Solution #2 - Using .groupby()
+import pandas as pd
+
+df_gr = fb_search_events[fb_search_events["search_results_position"].le(3)].groupby(by="clicked").size().to_frame("cl_count")
+
+df_pctg = df_gr.T.reset_index(drop=True).rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
+
+df_pctg = df_pctg[df_pctg.columns[::-1]]
+
+
+# Solution #3 - Using .value_counts()
+import pandas as pd
+
+df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3)]["clicked"].value_counts().reset_index()
+
+df_pctg = df_cl_counts.T.rename(columns={0: "top_3_clicked", 1: "top_3_notclicked"}).iloc[1:].reset_index(drop=True) / fb_search_events.shape[0] * 100
+
+
+# Solution #4 - Using .mean() from the values 0 or 100
+import pandas as pd
+
+df = fb_search_events.assign(t3_cl = 0, t3_nc = 0)[["clicked", "search_results_position", "t3_cl", "t3_nc"]]
+df["t3_cl"] = df["t3_cl"].mask(df["clicked"].eq(1) & df["search_results_position"].le(3), 100)
+df["t3_nc"] = df["t3_nc"].mask(df["clicked"].eq(0) & df["search_results_position"].le(3), 100)
+
+df_pctg = df[["t3_cl", "t3_nc"]].mean().reset_index().T.rename(columns={0: "top_3_clicked", 1: "top_3_notclicked"}).iloc[1:].reset_index(drop=True)
+
+
+# MySQL
+# *****
+SELECT
+    SUM( CASE WHEN clicked = 1 THEN 1 END ) / (SELECT COUNT(*) FROM fb_search_events) * 100 AS top_3_clicked,
+    SUM( CASE WHEN clicked = 0 THEN 1 END ) / (SELECT COUNT(*) FROM fb_search_events) * 100 AS top_3_notclicked
+FROM fb_search_events
+WHERE search_results_position <= 3;
