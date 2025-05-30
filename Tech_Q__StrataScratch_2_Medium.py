@@ -47,7 +47,13 @@
 #    2.32 Number of Streets Per Zip Code
 #    2.33 Acceptance Rate By Date
 #    2.34 Clicked Vs Non-Clicked Search Results
-#    2.35 ***** In progress *****
+#    2.35 Meta/Facebook Accounts
+#    2.36 Premium vs Freemium
+#    2.37 ***** In progress *****
+#    2.38 
+#    2.39 
+#    2.40 
+#    2.41 
 
 
 
@@ -1310,7 +1316,18 @@ df_pctg = pd.DataFrame({
     })
 
 
-# Solution #2 - Using .groupby()
+# Solution #2 - Using .pivot_table()
+import pandas as pd
+
+df = fb_search_events[fb_search_events["search_results_position"].le(3)][["search_id", "clicked"]]
+
+df_pt = df.pivot_table(columns="clicked", aggfunc="count").reset_index(drop=True).rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"})
+
+df_pctg = df_pt / fb_search_events.shape[0] * 100
+df_pctg = df_pctg[df_pctg.columns[::-1]]
+
+
+# Solution #3 - Using .groupby()
 import pandas as pd
 
 df_gr = fb_search_events[fb_search_events["search_results_position"].le(3)].groupby(by="clicked").size().to_frame().T
@@ -1319,7 +1336,7 @@ df_pctg = df_gr.rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb
 df_pctg = df_pctg[df_pctg.columns[::-1]]
 
 
-# Solution #3 - Using .value_counts()
+# Solution #4 - Using .value_counts()
 import pandas as pd
 
 df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3)]["clicked"].value_counts().to_frame().T
@@ -1327,7 +1344,7 @@ df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3
 df_pctg = df_cl_counts.rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
 
 
-# Solution #4 - Using .mean() from the values of 0 or 100
+# Solution #5 - Using .mean() from the values of 0 or 100
 import pandas as pd
 
 df = fb_search_events.assign(top_3_clicked = 0, top_3_notclicked = 0)[["clicked", "search_results_position", "top_3_clicked", "top_3_notclicked"]]
@@ -1344,3 +1361,71 @@ SELECT
     SUM( CASE WHEN clicked = 0 THEN 1 END ) / (SELECT COUNT(*) FROM fb_search_events) * 100 AS top_3_notclicked
 FROM fb_search_events
 WHERE search_results_position <= 3;
+
+
+
+# 2.35 Meta/Facebook Accounts
+# https://platform.stratascratch.com/coding/10296-facebook-accounts?code_type=2
+
+# Calculate the ratio of accounts closed on January 10th, 2020 using the fb_account_status table.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_filt = fb_account_status[fb_account_status["status_date"].eq("2020-01-10")]
+
+closed_ratio = df_filt[df_filt["status"].eq("closed")].shape[0] / df_filt.shape[0]
+
+
+# MySQL
+# *****
+SELECT
+    COUNT(*) / (SELECT COUNT(*) FROM fb_account_status WHERE status_date = '2020-01-10') AS closed_ratio
+FROM fb_account_status
+WHERE
+    status_date = '2020-01-10' AND
+    status = 'closed';
+
+
+
+# 2.36 Premium vs Freemium
+# https://platform.stratascratch.com/coding/10300-premium-vs-freemium?code_type=2
+
+# Find the total number of downloads for paying and non-paying users by date.
+# Include only records where non-paying customers have more downloads than paying customers.
+# The output should be sorted by earliest date first and contain 3 columns: date, non-paying downloads, paying downloads.
+
+
+# Python
+# ******
+import pandas as pd
+
+df_u_a = ms_user_dimension.merge(ms_acc_dimension, how="left", on="acc_id")
+
+df = ms_download_facts.merge(df_u_a, how="left", on="user_id")[["date", "paying_customer", "downloads"]]
+
+df_pt = df.pivot_table(index="date", columns="paying_customer", values="downloads", aggfunc="sum").reset_index().rename(columns={"no": "non_paying", "yes": "paying"})
+
+df_pt[df_pt["non_paying"].gt(df_pt["paying"])]
+
+
+# MySQL
+# *****
+WITH cte_joined AS
+(
+SELECT
+    date,
+    SUM( CASE WHEN paying_customer = 'no'  THEN downloads END ) AS non_paying,
+    SUM( CASE WHEN paying_customer = 'yes' THEN downloads END ) AS paying
+FROM ms_download_facts
+LEFT JOIN ms_user_dimension USING (user_id)
+LEFT JOIN ms_acc_dimension  USING (acc_id)
+GROUP BY date
+ORDER BY date
+) 
+SELECT *
+FROM cte_joined
+WHERE non_paying > paying;
+
