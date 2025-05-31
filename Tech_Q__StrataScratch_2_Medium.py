@@ -1303,7 +1303,7 @@ ORDER BY date_s;
 
 # Python
 # ******
-# Solution #1 - Using calculated results stored in variables and inserting them into a new DataFrame
+# Solution #1 - Using calculated results stored in variables and inserting them into a new DataFrame (created "manually")
 import pandas as pd
 
 t3_cl = fb_search_events[fb_search_events["clicked"].eq(1) & fb_search_events["search_results_position"].le(3)].shape[0] / fb_search_events.shape[0] * 100
@@ -1311,8 +1311,8 @@ t3_cl = fb_search_events[fb_search_events["clicked"].eq(1) & fb_search_events["s
 t3_nc = fb_search_events[fb_search_events["clicked"].eq(0) & fb_search_events["search_results_position"].le(3)].shape[0] / fb_search_events.shape[0] * 100
 
 df_pctg = pd.DataFrame({
-    "top_3_clicked"   : [t3_cl],
-    "top_3_notclicked": [t3_nc]
+    "T3_clicked"   : [t3_cl],
+    "T3_notclicked": [t3_nc]
     })
 
 
@@ -1321,7 +1321,7 @@ import pandas as pd
 
 df = fb_search_events[fb_search_events["search_results_position"].le(3)][["search_id", "clicked"]]
 
-df_pt = df.pivot_table(columns="clicked", aggfunc="count").reset_index(drop=True).rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"})
+df_pt = df.pivot_table(columns="clicked", aggfunc="count").reset_index(drop=True).rename(columns={0: "T3_notclicked", 1: "T3_clicked"})
 
 df_pctg = df_pt / fb_search_events.shape[0] * 100
 df_pctg = df_pctg[df_pctg.columns[::-1]]
@@ -1330,35 +1330,36 @@ df_pctg = df_pctg[df_pctg.columns[::-1]]
 # Solution #3 - Using .groupby()
 import pandas as pd
 
-df_gr = fb_search_events[fb_search_events["search_results_position"].le(3)].groupby(by="clicked").size().to_frame().T
+df_gr = fb_search_events[fb_search_events["search_results_position"].le(3)].groupby(by="clicked").size().to_frame().reindex([1, 0]).T
+df_gr = df_gr.rename(columns={0: "T3_notclicked", 1: "T3_clicked"})
 
-df_pctg = df_gr.rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
-df_pctg = df_pctg[df_pctg.columns[::-1]]
+df_pctg = df_gr / fb_search_events.shape[0] * 100
 
 
 # Solution #4 - Using .value_counts()
 import pandas as pd
 
 df_cl_counts = fb_search_events[fb_search_events["search_results_position"].le(3)]["clicked"].value_counts().to_frame().T
+df_cl_counts = df_cl_counts.rename(columns={0: "T3_notclicked", 1: "T3_clicked"})
 
-df_pctg = df_cl_counts.rename(columns={0: "top_3_notclicked", 1: "top_3_clicked"}) / fb_search_events.shape[0] * 100
+df_pctg = df_cl_counts / fb_search_events.shape[0] * 100
 
 
-# Solution #5 - Using .mean() from the values of 0 or 100
+# Solution #5 - Using .mean() from the two new columns, containing the values of 0 or 100
 import pandas as pd
 
-df = fb_search_events.assign(top_3_clicked = 0, top_3_notclicked = 0)[["clicked", "search_results_position", "top_3_clicked", "top_3_notclicked"]]
-df["top_3_clicked"   ] = df["top_3_clicked"   ].mask(df["clicked"].eq(1) & df["search_results_position"].le(3), 100)
-df["top_3_notclicked"] = df["top_3_notclicked"].mask(df["clicked"].eq(0) & df["search_results_position"].le(3), 100)
+df = fb_search_events.assign(T3_clicked = 0, T3_notclicked = 0)[["clicked", "search_results_position", "T3_clicked", "T3_notclicked"]]
+df["T3_clicked"   ] = df["T3_clicked"   ].mask(df["clicked"].eq(1) & df["search_results_position"].le(3), 100)
+df["T3_notclicked"] = df["T3_notclicked"].mask(df["clicked"].eq(0) & df["search_results_position"].le(3), 100)
 
-df_pctg = df[["top_3_clicked", "top_3_notclicked"]].mean().to_frame().T
+df_pctg = df[["T3_clicked", "T3_notclicked"]].mean().to_frame().T
 
 
 # MySQL
 # *****
 SELECT
-    SUM( CASE WHEN clicked = 1 THEN 1 END ) / (SELECT COUNT(*) FROM fb_search_events) * 100 AS top_3_clicked,
-    SUM( CASE WHEN clicked = 0 THEN 1 END ) / (SELECT COUNT(*) FROM fb_search_events) * 100 AS top_3_notclicked
+    SUM( CASE WHEN clicked = 1 THEN 1 END ) / (SELECT COUNT(*) FROM fb_search_events) * 100 AS T3_clicked,
+    SUM( CASE WHEN clicked = 0 THEN 1 END ) / (SELECT COUNT(*) FROM fb_search_events) * 100 AS T3_notclicked
 FROM fb_search_events
 WHERE search_results_position <= 3;
 
@@ -1386,7 +1387,7 @@ SELECT
 FROM fb_account_status
 WHERE
     status_date = '2020-01-10' AND
-    status = 'closed';
+    status      = 'closed';
 
 
 
