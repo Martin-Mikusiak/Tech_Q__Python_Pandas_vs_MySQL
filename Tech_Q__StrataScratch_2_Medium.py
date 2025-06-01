@@ -1,10 +1,8 @@
 # StrataScratch - Technical Questions (only the "Free" ones)
 # **********************************************************
-# https://platform.stratascratch.com/coding?code_type=2&is_freemium=1
+# https://platform.stratascratch.com/coding?is_freemium=1&code_type=2&page_size=100&difficulties=2
 
 # My own solutions - both in Python Pandas and in MySQL
-
-# ***** In progress *****
 
 
 # Contents
