@@ -12,6 +12,7 @@
 # 1. Difficulty: Easy  (27 Questions)
 # See the previous file "Tech_Q__StrataScratch_1_Easy.py"
 
+
 # 2. Difficulty: Medium  (41 Questions)
 #    2.1 Share of Active Users
 #    2.2 Premium Accounts
@@ -49,12 +50,11 @@
 #    2.34 Clicked Vs Non-Clicked Search Results
 #    2.35 Meta/Facebook Accounts
 #    2.36 Premium vs Freemium
-#    2.37 ***** In progress *****
-#    2.38 
-#    2.39 
-#    2.40 
-#    2.41 
-
+#    2.37 Risky Projects
+#    2.38 New Products
+#    2.39 Finding User Purchases
+#    2.40 Activity Rank
+#    2.41 Users By Average Session Time
 
 
 # 3. Difficulty: Hard  (12 Questions)
@@ -1430,3 +1430,196 @@ SELECT *
 FROM cte_joined
 WHERE non_paying > paying;
 
+
+
+# 2.37 Risky Projects
+# https://platform.stratascratch.com/coding/10304-risky-projects?code_type=2
+
+# You are given a set of projects and employee data. Each project has a name, a budget, and a specific duration.
+# Each employee has an annual salary and may be assigned to one or more projects for particular periods.
+# The task is to identify which projects are overbudget.
+# A project is considered overbudget if the prorated cost of all employees assigned to it exceeds the project’s budget.
+# To solve this, you must prorate each employee's annual salary based on the exact period they work on a given project, relative to a full year.
+# For example, if an employee works on a six-month project, only half of their annual salary should be attributed to that project.
+# Sum these prorated salary amounts for all employees assigned to a project and compare the total with the project’s budget.
+# Your output should be a list of overbudget projects, where each entry includes the project’s name, its budget, 
+# and the total prorated employee expenses for that project.
+# The total expenses should be rounded up to the nearest dollar. Assume all years have 365 days and disregard leap years.
+
+
+# Python
+# ******
+import pandas as pd
+import math
+
+df_e = linkedin_emp_projects.merge(linkedin_employees, left_on="emp_id", right_on="id")[["emp_id", "project_id", "salary"]]
+
+df_p = linkedin_projects.assign(dur_days = (linkedin_projects["end_date"] - linkedin_projects["start_date"]).dt.days)[["id", "title", "budget", "dur_days"]]
+
+df_pm = df_p.merge(df_e, left_on="id", right_on="project_id").drop(columns=["project_id", "emp_id"])
+df_pm = df_pm.assign(prorated_sal = df_pm["dur_days"] / 365 * df_pm["salary"])
+
+df_gr = df_pm.groupby(by=["id", "title", "budget"], as_index=False)["prorated_sal"].sum().drop(columns="id")
+df_gr = df_gr.assign(prorated_exp = df_gr["prorated_sal"].apply(math.ceil)).drop(columns="prorated_sal")
+df_gr[df_gr["budget"].lt(df_gr["prorated_exp"])]
+
+
+# MySQL
+# *****
+WITH cte_mrg AS
+(
+SELECT
+    pr.id,
+    title,
+    budget,
+    CEIL( SUM( DATEDIFF(end_date, start_date) / 365 * salary ) ) AS prorated_exp
+FROM linkedin_projects     AS pr
+JOIN linkedin_emp_projects AS ep
+    ON pr.id = ep.project_id
+JOIN linkedin_employees    AS em
+    ON ep.emp_id = em.id
+GROUP BY pr.id
+ORDER BY pr.id
+)
+SELECT
+    title,
+    budget,
+    prorated_exp
+FROM cte_mrg
+WHERE budget < prorated_exp;
+
+
+
+# 2.38 New Products
+# https://platform.stratascratch.com/coding/10318-new-products?code_type=2
+
+# Calculate the net change in the number of products launched by companies in 2020 compared to 2019.
+# Your output should include the company names and the net difference.
+# (Net difference = Number of products launched in 2020 - Number of products launched in 2019.)
+
+
+# Python
+# ******
+import pandas as pd
+
+df_pt = car_launches.pivot_table(index="company_name", columns="year", values="product_name", aggfunc="count").reset_index()
+
+df_pt = df_pt.assign(net_diff = df_pt[2020] - df_pt[2019]).drop(columns=[2019, 2020])
+
+
+# MySQL
+# *****
+SELECT
+    company_name,
+    SUM( CASE WHEN year = 2020 THEN 1 END ) - SUM( CASE WHEN year = 2019 THEN 1 END ) AS net_diff
+FROM car_launches
+GROUP BY company_name
+ORDER BY company_name;
+
+
+
+# 2.39 Finding User Purchases
+# https://platform.stratascratch.com/coding/10322-finding-user-purchases?code_type=2
+
+# Identify returning active users by finding users who made a second purchase happen within 7 days of the first.
+# Output a list of these user_ids.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = amazon_transactions.sort_values(by=["user_id", "created_at"])
+
+df = df.assign(d_diff = df.groupby(by="user_id")["created_at"].diff().dt.days)
+df = df.assign(r_n    = df.groupby(by="user_id").cumcount() + 1)
+
+df[df["r_n"].eq(2) & df["d_diff"].le(7)][["user_id"]]
+
+
+# MySQL
+# *****
+WITH cte_diff_rn AS
+(
+SELECT
+    user_id,
+    DATEDIFF( created_at, LAG(created_at) OVER(PARTITION BY user_id ORDER BY created_at) ) AS d_diff,
+    ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY created_at) AS r_n
+FROM amazon_transactions
+)
+SELECT user_id
+FROM cte_diff_rn
+WHERE
+    r_n     = 2 AND
+    d_diff <= 7;
+
+
+
+# 2.40 Activity Rank
+# https://platform.stratascratch.com/coding/10351-activity-rank?code_type=2
+
+# Find the email activity rank for each user. Email activity rank is defined by the total number of emails sent.
+# The user with the highest number of emails sent will have a rank of 1, and so on. Output the user, total emails, and their activity rank.
+# - Order records first by the total emails in descending order.
+# - Then, sort users with the same number of emails in alphabetical order by their username.
+# - In your rankings, return a unique value (i.e., a unique rank) even if multiple users have the same number of emails.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = google_gmail_emails.groupby(by="from_user").size().to_frame("total_emails").reset_index().sort_values(by=["total_emails", "from_user"], ascending=[False, True])
+
+df = df.assign(rank = df["total_emails"].rank(method="first", ascending=False))
+
+
+# MySQL
+# *****
+SELECT
+    from_user,
+    COUNT(*) AS total_emails,
+    RANK() OVER (ORDER BY COUNT(*) DESC, from_user) AS rnk
+FROM google_gmail_emails
+GROUP BY from_user
+ORDER BY rnk;
+
+
+
+# 2.41 Users By Average Session Time
+# https://platform.stratascratch.com/coding/10352-users-by-avg-session-time?code_type=2
+
+# Calculate each user's average session time, where a session is defined as the time difference between a page_load and a page_exit.
+# Assume each user has only one session per day.
+# If there are multiple page_load or page_exit events on the same day, use only the latest page_load and the earliest page_exit,
+# ensuring the page_load occurs before the page_exit.
+# Output the user_id and their average session time.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = facebook_web_log[facebook_web_log["action"].str.contains("page")].sort_values(by=["user_id", "timestamp"])
+df = df.assign(duration = df["timestamp"].diff())
+
+df_avg = df[df["action"].str.contains("exit")].groupby(by="user_id")["duration"].mean().to_frame("avg_duration").reset_index()
+
+
+# MySQL
+# *****
+WITH cte_drt AS
+(
+SELECT
+    *,
+    TIMESTAMPDIFF(SECOND, LAG(timestamp) OVER(), timestamp) AS duration
+FROM facebook_web_log
+WHERE action LIKE 'page%'
+ORDER BY user_id, timestamp
+)
+SELECT
+    user_id,
+    AVG(duration) AS avg_duration
+FROM cte_drt
+WHERE action LIKE '%exit%'
+GROUP BY user_id;
