@@ -8,7 +8,7 @@
 # Contents
 
 # 1. Difficulty: Easy  (27 Questions)
-# See the previous file "Tech_Q__StrataScratch_1_Easy.py"
+# --> See the previous file "Tech_Q__StrataScratch_1_Easy.py"
 
 
 # 2. Difficulty: Medium  (41 Questions)
@@ -56,9 +56,7 @@
 
 
 # 3. Difficulty: Hard  (12 Questions)
-#    3.1 ***** In progress *****
-#    3.2 
-#    3.3 
+# --> See the next file "Tech_Q__StrataScratch_3_Hard.py"
 
 
 
