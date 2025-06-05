@@ -36,8 +36,13 @@
 #    1.26 Salaries Differences
 #    1.27 Workers With The Highest Salaries
 
+
 # 2. Difficulty: Medium  (41 Questions)
-# See the next file "Tech_Q__StrataScratch_2_Medium.py"
+# --> See the next file "Tech_Q__StrataScratch_2_Medium.py"
+
+
+# 3. Difficulty: Hard  (12 Questions)
+# --> See the next file "Tech_Q__StrataScratch_3_Hard.py"
 
 
 
@@ -873,5 +878,3 @@ FROM worker AS w
 JOIN title AS t
     ON w.worker_id = t.worker_ref_id
 WHERE salary = (SELECT MAX(salary) FROM worker);
-
-
