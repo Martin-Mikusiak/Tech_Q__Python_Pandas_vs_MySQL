@@ -21,8 +21,8 @@
 #    3.1 Marketing Campaign Success [Advanced]
 #    3.2 Most Popular Client For Calls
 #    3.3 Retention Rate
-#    3.4  ***** In progress *****
-#    3.5 
+#    3.4 Cookbook Recipes
+#    3.5 ***** In progress *****
 #    3.6 
 #    3.7 
 #    3.8 
@@ -208,3 +208,55 @@ df_gr_ratio = df_gr_ratio.assign(ret_ratio = df_gr_ratio["ret_pctg_202101"] / df
 # *****
 
 # ***** In progress *****
+
+
+
+# 3.4 Cookbook Recipes
+# https://platform.stratascratch.com/coding/2089-cookbook-recipes?code_type=2
+
+# You are given a table containing recipe titles and their corresponding page numbers from a cookbook.
+# Your task is to format the data to represent how recipes are distributed across double-page spreads in the book.
+# Each spread consists of two pages:
+# - The left page (even-numbered) and its corresponding recipe title (if any).
+# - The right page (odd-numbered) and its corresponding recipe title (if any).
+# The output table should contain the following three columns:
+# - left_page_number – The even-numbered page that starts each double-page spread.
+# - left_title  – The title of the recipe on the left page (if available).
+# - right_title – The title of the recipe on the right page (if available).
+# For the k-th row (starting from 0):
+# - The left_page_number should be 2 * k.
+# - The left_title should be the title from page 2 * k, or NULL if there is no recipe on that page.
+# - The right_title should be the title from page 2 * k + 1, or NULL if there is no recipe on that page.
+# Each page contains at most one recipe and if a page does not contain a recipe, the corresponding title should be NULL.
+# Page 0 (the inside cover) is always empty and included in the output.
+# The table should ensure that all pages up to the maximum recorded page number are included.
+
+
+# Python
+# ******
+import pandas as pd
+
+p_n_max = cookbook_titles["page_number"].max()
+
+if p_n_max % 2 == 1:
+    p_n_max -= 1
+    
+df_cookbook = pd.DataFrame({
+    "L_p_n": range(0, p_n_max + 1, 2),
+    "R_p_n": range(1, p_n_max + 2, 2)
+    })
+
+df_cookbook = df_cookbook.merge(cookbook_titles, how="left", left_on="L_p_n", right_on="page_number")
+df_cookbook = df_cookbook.rename(columns={"title": "L_title"}).drop(columns="page_number")
+
+df_cookbook = df_cookbook.merge(cookbook_titles, how="left", left_on="R_p_n", right_on="page_number")
+df_cookbook = df_cookbook.rename(columns={"title": "R_title"}).drop(columns=["R_p_n", "page_number"])
+
+
+# MySQL
+# *****
+
+# ***** In progress *****
+
+
+
