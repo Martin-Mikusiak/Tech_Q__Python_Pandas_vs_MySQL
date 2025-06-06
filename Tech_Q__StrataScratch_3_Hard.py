@@ -255,8 +255,27 @@ df_cookbook = df_cookbook.rename(columns={"title": "R_title"}).drop(columns=["R_
 
 # MySQL
 # *****
-
-# ***** In progress *****
-
-
+WITH RECURSIVE cte_numbers AS
+(
+SELECT 0 AS n
+UNION ALL
+SELECT n + 1 FROM cte_numbers
+WHERE n + 1 <= (SELECT FLOOR( MAX(page_number) / 2 ) FROM cookbook_titles)
+),
+cte_pages AS
+(
+SELECT 
+    n * 2     AS L_p_n,
+    n * 2 + 1 AS R_p_n
+FROM cte_numbers
+)
+SELECT 
+    L_p_n,
+    lt.title AS L_title,
+    rt.title AS R_title
+FROM cte_pages
+LEFT JOIN cookbook_titles AS lt
+    ON L_p_n = lt.page_number
+LEFT JOIN cookbook_titles AS rt
+    ON R_p_n = rt.page_number;
 
