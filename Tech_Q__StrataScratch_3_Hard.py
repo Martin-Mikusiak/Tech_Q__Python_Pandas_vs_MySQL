@@ -22,8 +22,8 @@
 #    3.2 Most Popular Client For Calls
 #    3.3 Retention Rate
 #    3.4 Cookbook Recipes
-#    3.5 ***** In progress *****
-#    3.6 
+#    3.5 Host Popularity Rental Prices
+#    3.6 ***** In progress *****
 #    3.7 
 #    3.8 
 #    3.9 
@@ -331,4 +331,58 @@ LEFT JOIN cookbook_titles AS lt
     ON L_p_n = lt.page_number
 LEFT JOIN cookbook_titles AS rt
     ON R_p_n = rt.page_number;
+
+
+
+# 3.5 Host Popularity Rental Prices
+# https://platform.stratascratch.com/coding/9632-host-popularity-rental-prices?code_type=2
+
+# You are given a table named airbnb_host_searches that contains data for rental property searches made by users.
+# Determine the minimum, average, and maximum rental prices for each popularity-rating bucket.
+# A popularity-rating bucket should be assigned to every record based on its number_of_reviews (see rules below).
+# The host’s popularity rating is defined as below:
+# * 0 reviews:            "New"
+# * 1 to 5 reviews:       "Rising"
+# * 6 to 15 reviews:      "Trending Up"
+# * 16 to 40 reviews:     "Popular"
+# * More than 40 reviews: "Hot"
+# Tip: The id column in the table refers to the search ID.
+# Output host popularity rating and their minimum, average and maximum rental prices.
+# Order the solution by the minimum price.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = airbnb_host_searches[["price", "number_of_reviews"]].assign(host_popularity = "New")
+
+df["host_popularity"] = df["host_popularity"].mask(df["number_of_reviews"].between( 1,  5), "Rising")
+df["host_popularity"] = df["host_popularity"].mask(df["number_of_reviews"].between( 6, 15), "Trending Up")
+df["host_popularity"] = df["host_popularity"].mask(df["number_of_reviews"].between(16, 40), "Popular")
+df["host_popularity"] = df["host_popularity"].mask(df["number_of_reviews"].gt(40)         , "Hot")
+
+df_gr = df.groupby(by="host_popularity", as_index=False).agg(
+    min_price = ("price", "min" ),
+    avg_price = ("price", "mean"),
+    max_price = ("price", "max" )
+    ).sort_values(by="min_price")
+
+
+# MySQL
+# *****
+SELECT
+    CASE
+        WHEN number_of_reviews = 0               THEN 'New'
+        WHEN number_of_reviews BETWEEN  1 AND  5 THEN 'Rising'
+        WHEN number_of_reviews BETWEEN  6 AND 15 THEN 'Trending Up'
+        WHEN number_of_reviews BETWEEN 16 AND 40 THEN 'Popular'
+        WHEN number_of_reviews > 40              THEN 'Hot'
+    END AS host_popularity,
+    MIN(price) AS min_price,
+    AVG(price) AS avg_price,
+    MAX(price) AS max_price
+FROM airbnb_host_searches
+GROUP BY host_popularity
+ORDER BY min_price;
 
