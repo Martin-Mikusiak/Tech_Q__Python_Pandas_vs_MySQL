@@ -194,14 +194,72 @@ df_gr_202012 = df_mrg_202012.groupby(by="account_id", as_index=False)["ret_pctg_
 df_gr_202101 = df_mrg_202101.groupby(by="account_id", as_index=False)["ret_pctg_202101"].mean()
 
 df_gr_ratio = df_gr_202012.merge(df_gr_202101, on="account_id").sort_values(by="account_id")
-df_gr_ratio = df_gr_ratio.assign(ret_ratio = df_gr_ratio.apply(lambda row: row["ret_pctg_202101"] / row["ret_pctg_202012"] if row["ret_pctg_202012"] != 0 else 0, axis=1))
-df_gr_ratio[["account_id", "ret_ratio"]]
+df_gr_ratio = df_gr_ratio.assign(retention_ratio = df_gr_ratio.apply(lambda row: row["ret_pctg_202101"] / row["ret_pctg_202012"] if row["ret_pctg_202012"] != 0 else 0, axis=1))
+df_gr_ratio[["account_id", "retention_ratio"]]
 
 
 # MySQL
 # *****
-
-# ***** In progress *****
+WITH cte_202012 AS
+(
+SELECT DISTINCT
+    account_id,
+    user_id AS uid_202012
+FROM sf_events
+WHERE EXTRACT(YEAR_MONTH FROM record_date) = 202012
+),
+cte_202101 AS
+(
+SELECT DISTINCT
+    account_id,
+    user_id AS uid_202101
+FROM sf_events
+WHERE EXTRACT(YEAR_MONTH FROM record_date) = 202101
+),
+cte_202012_ret AS
+(
+SELECT DISTINCT
+    account_id,
+    user_id AS uid_202012_ret
+FROM sf_events
+WHERE EXTRACT(YEAR_MONTH FROM record_date) > 202012
+),
+cte_202101_ret AS
+(
+SELECT DISTINCT
+    account_id,
+    user_id AS uid_202101_ret
+FROM sf_events
+WHERE EXTRACT(YEAR_MONTH FROM record_date) > 202101
+),
+cte_202012_gr AS
+(
+SELECT
+    c.account_id,
+    AVG( CASE WHEN uid_202012_ret IS NOT NULL THEN 100 ELSE 0 END ) AS ret_pctg_202012
+FROM cte_202012 AS c
+LEFT JOIN cte_202012_ret AS r
+    ON c.account_id = r.account_id AND
+    uid_202012 = uid_202012_ret
+GROUP BY c.account_id
+),
+cte_202101_gr AS
+(
+SELECT
+    c.account_id,
+    AVG( CASE WHEN uid_202101_ret IS NOT NULL THEN 100 ELSE 0 END ) AS ret_pctg_202101
+FROM cte_202101 AS c
+LEFT JOIN cte_202101_ret AS r
+    ON c.account_id = r.account_id AND
+    uid_202101 = uid_202101_ret
+GROUP BY c.account_id
+)
+SELECT
+    account_id,
+    IF(ret_pctg_202012 = 0, 0, ret_pctg_202101 / ret_pctg_202012) AS retention_ratio
+FROM cte_202012_gr
+JOIN cte_202101_gr
+    USING (account_id);
 
 
 
