@@ -23,8 +23,8 @@
 #    3.3 Retention Rate
 #    3.4 Cookbook Recipes
 #    3.5 Host Popularity Rental Prices
-#    3.6 ***** In progress *****
-#    3.7 
+#    3.6 City With Most Amenities
+#    3.7 ***** In progress *****
 #    3.8 
 #    3.9 
 #    3.10 
@@ -386,3 +386,43 @@ FROM airbnb_host_searches
 GROUP BY host_popularity
 ORDER BY min_price;
 
+
+
+# 3.6 City With Most Amenities
+# https://platform.stratascratch.com/coding/9633-city-with-most-amenities?code_type=2
+
+# You're given a dataset of searches for properties on Airbnb.
+# For simplicity, let's say that each search result (i.e., each row) represents a unique host.
+# Find the city with the most amenities across all their host's properties. Output the name of the city.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = airbnb_search_details[["city", "amenities"]]
+df = df.assign(amenities_count = df["amenities"].str.split(",").apply(len))
+df["amenities_count"] = df["amenities_count"].mask(df["amenities"].eq("{}"), 0)
+
+df_gr = df.groupby(by="city")["amenities_count"].sum().to_frame("amenities_sum").reset_index()
+df_gr.nlargest(1, "amenities_sum", keep="all")["city"]
+
+
+# MySQL
+# *****
+WITH cte_amenities_sum AS
+(
+SELECT 
+    city,
+    SUM(
+        CASE
+            WHEN amenities = '{}' THEN 0
+            ELSE LENGTH(amenities) - LENGTH( REPLACE(amenities, ",", "") ) + 1
+        END
+    ) AS amenities_sum
+FROM airbnb_search_details
+GROUP BY city
+)
+SELECT city
+FROM cte_amenities_sum
+WHERE amenities_sum = (SELECT MAX(amenities_sum) FROM cte_amenities_sum);
