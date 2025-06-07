@@ -259,7 +259,8 @@ SELECT
     IF(ret_pctg_202012 = 0, 0, ret_pctg_202101 / ret_pctg_202012) AS retention_ratio
 FROM cte_202012_gr
 JOIN cte_202101_gr
-    USING (account_id);
+    USING (account_id)
+ORDER BY account_id;
 
 
 
