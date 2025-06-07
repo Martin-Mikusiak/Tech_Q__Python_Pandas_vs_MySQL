@@ -187,8 +187,7 @@ df_202012_ret = sf_events[
     ][["account_id", "user_id"]].drop_duplicates().rename(columns={"user_id": "uid_202012_ret"})
 
 df_202101_ret = sf_events[
-    (sf_events["record_date"].dt.year.eq(2021) & sf_events["record_date"].dt.month.ge(2)) |
-    sf_events["record_date"].dt.year.ge(2022)
+    sf_events["record_date"].ge("2021-02-01")
     ][["account_id", "user_id"]].drop_duplicates().rename(columns={"user_id": "uid_202101_ret"})
 
 df_mrg_202012 = df_202012.merge(df_202012_ret, how="left", left_on=["account_id", "uid_202012"], right_on=["account_id", "uid_202012_ret"]).assign(ret_pctg_202012 = 100)
@@ -201,7 +200,10 @@ df_gr_202012 = df_mrg_202012.groupby(by="account_id", as_index=False)["ret_pctg_
 df_gr_202101 = df_mrg_202101.groupby(by="account_id", as_index=False)["ret_pctg_202101"].mean()
 
 df_gr_ratio = df_gr_202012.merge(df_gr_202101, on="account_id").sort_values(by="account_id")
-df_gr_ratio = df_gr_ratio.assign(ret_ratio = df_gr_ratio["ret_pctg_202101"] / df_gr_ratio["ret_pctg_202012"])[["account_id", "ret_ratio"]]
+
+df_gr_ratio = df_gr_ratio.assign(ret_ratio = df_gr_ratio.apply(lambda row: row["ret_pctg_202101"] / row["ret_pctg_202012"] if row["ret_pctg_202012"] != 0 else 0, axis=1))
+
+df_gr_ratio[["account_id", "ret_ratio"]]
 
 
 # MySQL
