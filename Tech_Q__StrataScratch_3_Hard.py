@@ -24,8 +24,8 @@
 #    3.4 Cookbook Recipes
 #    3.5 Host Popularity Rental Prices
 #    3.6 City With Most Amenities
-#    3.7 ***** In progress *****
-#    3.8 
+#    3.7 Counting Instances in Text
+#    3.8 ***** In progress *****
 #    3.9 
 #    3.10 
 #    3.11 
@@ -426,3 +426,45 @@ GROUP BY city
 SELECT city
 FROM cte_amenities_sum
 WHERE amenities_sum = (SELECT MAX(amenities_sum) FROM cte_amenities_sum);
+
+
+
+# 3.7 Counting Instances in Text
+# https://platform.stratascratch.com/coding/9814-counting-instances-in-text?code_type=2
+
+# Find the number of times the exact words bull and bear appear in the contents column.
+# Count all occurrences, even if they appear multiple times within the same row.
+# Matches should be case-insensitive and only count exact words, that is, exclude substrings like bullish or bearing.
+# Output the word (bull or bear) and the corresponding number of occurrences.
+
+
+# Python
+# ******
+import pandas as pd
+
+bull_count = google_file_store["contents"].str.lower().str.count(r"\bbull\b").sum()
+bear_count = google_file_store["contents"].str.lower().str.count(r"\bbear\b").sum()
+
+df = pd.DataFrame({
+    "word" : ["bull", "bear"],
+    "count": [bull_count, bear_count]
+})
+
+
+# MySQL
+# *****
+WITH cte_lwr_rmv_pnct AS
+(
+SELECT
+    LOWER( REGEXP_REPLACE(contents, '[.,!?]', '') ) AS c_cleaned
+FROM google_file_store
+)
+SELECT
+    'bull' AS word,
+    SUM( ( LENGTH(c_cleaned) - LENGTH( REGEXP_REPLACE(c_cleaned, '\\bbull\\b', '') ) ) / LENGTH('bull') ) AS word_count
+FROM cte_lwr_rmv_pnct
+UNION
+SELECT
+    'bear' AS word,
+    SUM( ( LENGTH(c_cleaned) - LENGTH( REGEXP_REPLACE(c_cleaned, '\\bbear\\b', '') ) ) / LENGTH('bear') ) AS word_count
+FROM cte_lwr_rmv_pnct;
