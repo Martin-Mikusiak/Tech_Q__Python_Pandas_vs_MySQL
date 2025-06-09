@@ -17,7 +17,7 @@
 # --> See the previous file "Tech_Q__StrataScratch_2_Medium.py"
 
 
-# 3. Difficulty: Hard  (12 Questions)
+# 3. Difficulty: Hard  (11 Questions)
 #    3.1 Marketing Campaign Success [Advanced]
 #    3.2 Most Popular Client For Calls
 #    3.3 Retention Rate
@@ -25,15 +25,14 @@
 #    3.5 Host Popularity Rental Prices
 #    3.6 City With Most Amenities
 #    3.7 Counting Instances in Text
-#    3.8 ***** In progress *****
-#    3.9 
-#    3.10 
+#    3.8 Top 5 States With 5 Star Businesses
+#    3.9 Popularity Percentage
+#    3.10 ***** In progress *****
 #    3.11 
-#    3.12 
 
 
 
-# 3. Difficulty: Hard  (12 Questions)
+# 3. Difficulty: Hard  (11 Questions)
 # ***********************************
 
 # 3.1 Marketing Campaign Success [Advanced]
@@ -468,3 +467,91 @@ SELECT
     'bear' AS word,
     SUM( ( LENGTH(c_cleaned) - LENGTH( REGEXP_REPLACE(c_cleaned, '\\bbear\\b', '') ) ) / LENGTH('bear') ) AS word_count
 FROM cte_lwr_rmv_pnct;
+
+
+
+# 3.8 Top 5 States With 5 Star Businesses
+# https://platform.stratascratch.com/coding/10046-top-5-states-with-5-star-businesses?code_type=2
+
+# Find the top 5 states with the most 5 star businesses.
+# Output the state name along with the number of 5-star businesses and order records by the number of 5-star businesses in descending order.
+# In case there are ties in the number of businesses, return all the unique states.
+# If two states have the same result, sort them in alphabetical order.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = yelp_business[yelp_business["stars"].eq(5)].groupby(by="state").size().to_frame("n_businesses").reset_index()
+df = df.assign(d_rnk = df["n_businesses"].rank(method="dense", ascending=False))
+df[df["d_rnk"].le(5)].sort_values(by=["d_rnk", "state"]).drop(columns="d_rnk")
+
+
+# MySQL
+# *****
+WITH cte_d_rnk AS
+(
+SELECT
+    state,
+    COUNT(*) AS n_businesses,
+    DENSE_RANK() OVER(ORDER BY COUNT(*) DESC) AS d_rnk
+FROM yelp_business
+WHERE stars = 5
+GROUP BY state
+ORDER BY d_rnk, state
+)
+SELECT
+    state,
+    n_businesses
+FROM cte_d_rnk
+WHERE d_rnk <= 5;
+
+
+
+# 3.9 Popularity Percentage
+# https://platform.stratascratch.com/coding/10284-popularity-percentage?code_type=2
+
+# Find the popularity percentage for each user on Meta/Facebook.
+# The dataset contains two columns, user1 and user2, which represent pairs of friends.
+# Each row indicates a mutual friendship between user1 and user2, meaning both users are friends with each other.
+# A user's popularity percentage is calculated as the total number of friends they have (counting connections from both user1 and user2 columns)
+# divided by the total number of unique users on the platform.
+# Multiply this value by 100 to express it as a percentage.
+# Output each user along with their calculated popularity percentage.
+# The results should be ordered by user ID in ascending order.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = pd.concat([facebook_friends["user1"], facebook_friends["user2"]], ignore_index=True).to_frame("user")
+
+df_gr = df.groupby(by="user").size().to_frame("friends_count").reset_index()
+df_gr = df_gr.assign(popularity_pctg = df_gr["friends_count"] / df_gr.shape[0] * 100).drop(columns="friends_count")
+
+
+# MySQL
+# *****
+WITH cte_users AS
+(
+SELECT user1 AS user
+FROM facebook_friends
+UNION ALL
+SELECT user2 AS user
+FROM facebook_friends
+),
+cte_friends_count AS
+(
+SELECT
+    user,
+    COUNT(*) AS friends_count
+FROM cte_users
+GROUP BY user
+ORDER BY user
+)
+SELECT
+    user,
+    friends_count / (SELECT COUNT(*) FROM cte_friends_count) * 100 AS popularity_pctg
+FROM cte_friends_count;
