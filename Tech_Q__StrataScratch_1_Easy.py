@@ -41,7 +41,7 @@
 # --> See the next file "Tech_Q__StrataScratch_2_Medium.py"
 
 
-# 3. Difficulty: Hard  (12 Questions)
+# 3. Difficulty: Hard  (11 Questions)
 # --> See the next file "Tech_Q__StrataScratch_3_Hard.py"
 
 
