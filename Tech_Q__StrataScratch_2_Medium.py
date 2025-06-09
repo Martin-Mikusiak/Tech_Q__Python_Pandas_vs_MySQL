@@ -55,7 +55,7 @@
 #    2.41 Users By Average Session Time
 
 
-# 3. Difficulty: Hard  (12 Questions)
+# 3. Difficulty: Hard  (11 Questions)
 # --> See the next file "Tech_Q__StrataScratch_3_Hard.py"
 
 
