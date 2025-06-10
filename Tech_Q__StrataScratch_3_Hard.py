@@ -576,21 +576,29 @@ fraud_score[fraud_score["fraud_score"].ge(fraud_score["threshold"])].drop(column
 
 # MySQL
 # *****
-WITH cte_pct_rank AS
+WITH cte_ntile_20 AS
 (
 SELECT
-    policy_num,
-    state,
-    claim_cost,
-    fraud_score,
-    PERCENT_RANK() OVER(PARTITION BY state ORDER BY fraud_score) AS pct_rank
+    *,
+    NTILE(20) OVER(PARTITION BY state ORDER BY fraud_score DESC) AS ntile_20
 FROM fraud_score
+),
+cte_threshold AS
+(
+SELECT
+    state,
+    MIN(fraud_score) AS threshold
+FROM cte_ntile_20
+WHERE ntile_20 = 1
+GROUP BY state
 )
 SELECT
     policy_num,
-    state,
+    n.state,
     claim_cost,
     fraud_score
-FROM cte_pct_rank
-WHERE pct_rank >= .95
+FROM cte_ntile_20 AS n
+JOIN cte_threshold AS t
+    USING (state)
+WHERE fraud_score >= threshold
 ORDER BY policy_num;
