@@ -27,8 +27,8 @@
 #    3.7 Counting Instances in Text
 #    3.8 Top 5 States With 5 Star Businesses
 #    3.9 Popularity Percentage
-#    3.10 ***** In progress *****
-#    3.11 
+#    3.10 Top Percentile Fraud
+#    3.11 ***** In progress *****
 
 
 
@@ -555,3 +555,42 @@ SELECT
     user,
     friends_count / (SELECT COUNT(*) FROM cte_friends_count) * 100 AS popularity_pctg
 FROM cte_friends_count;
+
+
+
+# 3.10 Top Percentile Fraud
+# https://platform.stratascratch.com/coding/10303-top-percentile-fraud?code_type=2
+
+# We want to identify the most suspicious claims in each state.
+# We'll consider the top 5 percentile of claims with the highest fraud scores in each state as potentially fraudulent.
+# Your output should include the policy number, state, claim cost, and fraud score.
+
+
+# Python
+# ******
+import pandas as pd
+
+fraud_score = fraud_score.assign(threshold = fraud_score.groupby(by="state")["fraud_score"].transform(lambda x: x.quantile(.95)))
+fraud_score[fraud_score["fraud_score"].ge(fraud_score["threshold"])].drop(columns="threshold")
+
+
+# MySQL
+# *****
+WITH cte_pct_rank AS
+(
+SELECT
+    policy_num,
+    state,
+    claim_cost,
+    fraud_score,
+    PERCENT_RANK() OVER(PARTITION BY state ORDER BY fraud_score) AS pct_rank
+FROM fraud_score
+)
+SELECT
+    policy_num,
+    state,
+    claim_cost,
+    fraud_score
+FROM cte_pct_rank
+WHERE pct_rank >= .95
+ORDER BY policy_num;
