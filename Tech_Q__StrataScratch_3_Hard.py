@@ -28,7 +28,8 @@
 #    3.8 Top 5 States With 5 Star Businesses
 #    3.9 Popularity Percentage
 #    3.10 Top Percentile Fraud
-#    3.11 ***** In progress *****
+#    3.11 Monthly Percentage Difference
+#    3.12 ***** In progress *****
 
 
 
@@ -600,3 +601,40 @@ JOIN cte_threshold AS t
 WHERE fraud_score >= threshold;
 
 # Note: For the latest versions of MySQL there is:  SELECT ..., PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY fraud_score) OVER (PARTITION BY state) AS threshold
+
+
+
+# 3.11 Monthly Percentage Difference
+# https://platform.stratascratch.com/coding/10319-monthly-percentage-difference?code_type=2
+
+# Given a table of purchases by date, calculate the month-over-month percentage change in revenue.
+# The output should include the year-month date (YYYY-MM) and percentage change, rounded to the 2nd decimal point,
+# and sorted from the beginning of the year to the end of the year.
+# The percentage change column will be populated from the 2nd month forward and can be calculated as:
+# ((this month's revenue - last month's revenue) / last month's revenue) * 100
+
+
+# Python
+# ******
+import pandas as pd
+
+sf_transactions = sf_transactions.assign(yyyymm = sf_transactions["created_at"].dt.strftime("%Y-%m"))
+
+df_gr = sf_transactions.groupby("yyyymm", as_index=False).agg(revenue = ("value", "sum"))
+df_gr = df_gr.assign(rev_pctg_chg = (df_gr["revenue"].diff() / df_gr["revenue"].shift(1) * 100).round(2)).drop(columns="revenue")
+
+
+# MySQL
+# *****
+WITH cte_revenue AS
+(
+SELECT
+    DATE_FORMAT(created_at, '%Y-%m') AS yyyymm,
+    SUM(value) AS revenue
+FROM sf_transactions
+GROUP BY yyyymm
+)
+SELECT
+    yyyymm,
+    ROUND( (revenue - LAG(revenue) OVER()) / LAG(revenue) OVER() * 100, 2 ) AS rev_pctg_chg
+FROM cte_revenue;
