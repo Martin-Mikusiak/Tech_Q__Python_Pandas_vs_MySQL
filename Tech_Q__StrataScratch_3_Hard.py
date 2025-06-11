@@ -579,7 +579,8 @@ fraud_score[fraud_score["fraud_score"].ge(fraud_score["threshold"])].drop(column
 WITH cte_ntile_20 AS
 (
 SELECT
-    *,
+    state,
+    fraud_score,
     NTILE(20) OVER(PARTITION BY state ORDER BY fraud_score DESC) AS ntile_20
 FROM fraud_score
 ),
@@ -592,13 +593,10 @@ FROM cte_ntile_20
 WHERE ntile_20 = 1
 GROUP BY state
 )
-SELECT
-    policy_num,
-    n.state,
-    claim_cost,
-    fraud_score
-FROM cte_ntile_20 AS n
+SELECT f.*
+FROM fraud_score AS f
 JOIN cte_threshold AS t
     USING (state)
-WHERE fraud_score >= threshold
-ORDER BY policy_num;
+WHERE fraud_score >= threshold;
+
+# Note: For the latest versions of MySQL there is:  SELECT ..., PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY fraud_score) OVER (PARTITION BY state) AS threshold
