@@ -633,6 +633,7 @@ SELECT
     SUM(value) AS revenue
 FROM sf_transactions
 GROUP BY yyyymm
+ORDER BY yyyymm
 )
 SELECT
     yyyymm,
