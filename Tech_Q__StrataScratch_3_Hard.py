@@ -17,7 +17,7 @@
 # --> See the previous file "Tech_Q__StrataScratch_2_Medium.py"
 
 
-# 3. Difficulty: Hard  (11 Questions)
+# 3. Difficulty: Hard  (13 Questions)
 #    3.1 Marketing Campaign Success [Advanced]
 #    3.2 Most Popular Client For Calls
 #    3.3 Retention Rate
@@ -29,11 +29,12 @@
 #    3.9 Popularity Percentage
 #    3.10 Top Percentile Fraud
 #    3.11 Monthly Percentage Difference
-#    3.12 ***** In progress *****
+#    3.12 Rank Variance Per Country
+#    3.13 ***** In progress *****
 
 
 
-# 3. Difficulty: Hard  (11 Questions)
+# 3. Difficulty: Hard  (13 Questions)
 # ***********************************
 
 # 3.1 Marketing Campaign Success [Advanced]
@@ -639,3 +640,53 @@ SELECT
     yyyymm,
     ROUND( (revenue - LAG(revenue) OVER()) / LAG(revenue) OVER() * 100, 2 ) AS rev_pctg_chg
 FROM cte_revenue;
+
+
+
+# 3.12 Rank Variance Per Country
+# https://platform.stratascratch.com/coding/2007-rank-variance-per-country?code_type=2
+
+# Which countries have risen in the rankings based on the number of comments between Dec 2019 vs Jan 2020?
+# Hint: Avoid gaps between ranks when ranking countries.
+
+
+# Python
+# ******
+import pandas as pd
+
+fb_comments_count = fb_comments_count.assign(yyyymm = fb_comments_count["created_at"].dt.strftime("%Y%m"))
+
+df_cc = fb_comments_count.merge(fb_active_users, on="user_id")
+
+df_cc_pt = df_cc.pivot_table(index="country", columns="yyyymm", values="number_of_comments", aggfunc="sum", fill_value=0).reset_index()[["country", "201912", "202001"]]
+
+df_cc_pt = df_cc_pt.assign(rnk_201912 = df_cc_pt["201912"].rank(method="dense", ascending=False))
+df_cc_pt = df_cc_pt.assign(rnk_202001 = df_cc_pt["202001"].rank(method="dense", ascending=False))
+
+df_cc_pt[df_cc_pt["rnk_201912"].gt(df_cc_pt["rnk_202001"])][["country"]]
+
+
+# MySQL
+# *****
+WITH cte_joined AS
+(
+SELECT
+    country,
+    SUM( CASE WHEN EXTRACT(YEAR_MONTH FROM created_at) = '201912' THEN number_of_comments END ) AS 201912_c,
+    SUM( CASE WHEN EXTRACT(YEAR_MONTH FROM created_at) = '202001' THEN number_of_comments END ) AS 202001_c
+FROM fb_comments_count
+JOIN fb_active_users
+    USING (user_id)
+GROUP BY country
+),
+cte_d_rnk AS
+(
+SELECT
+    country,
+    DENSE_RANK() OVER(ORDER BY 201912_c DESC) AS rnk_201912,
+    DENSE_RANK() OVER(ORDER BY 202001_c DESC) AS rnk_202001
+FROM cte_joined
+)
+SELECT country
+FROM cte_d_rnk
+WHERE rnk_201912 > rnk_202001;
