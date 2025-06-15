@@ -30,7 +30,8 @@
 #    3.10 Top Percentile Fraud
 #    3.11 Monthly Percentage Difference
 #    3.12 Rank Variance Per Country
-#    3.13 ***** In progress *****
+#    3.13 Consecutive Days
+#    3.14 ***** In progress *****
 
 
 
@@ -690,3 +691,42 @@ FROM cte_joined
 SELECT country
 FROM cte_d_rnk
 WHERE rnk_201912 > rnk_202001;
+
+
+
+# 3.13 Consecutive Days
+# https://platform.stratascratch.com/coding/2054-consecutive-days?code_type=2
+
+# Find all the users who were active for 3 consecutive days or more.
+
+
+# Python
+# ******
+import pandas as pd
+
+sf_events = sf_events.sort_values(by=["user_id", "record_date"]).drop(columns="account_id")
+sf_events = sf_events.assign(date_diff = sf_events.groupby(by="user_id")["record_date"].diff().dt.days)
+
+df = sf_events[sf_events["date_diff"].eq(1) & sf_events["date_diff"].shift(1).eq(1)].drop_duplicates()[["user_id"]]
+
+
+# MySQL
+# *****
+WITH cte_date_diff AS
+(
+SELECT
+    user_id,
+    record_date,
+    DATEDIFF(record_date, LAG(record_date) OVER(PARTITION BY user_id ORDER BY record_date)) AS date_diff
+FROM sf_events
+),
+cte_cnsctv_days AS
+(
+SELECT
+    user_id,
+    CASE WHEN date_diff = 1 AND LAG(date_diff) OVER() = 1 THEN 1 END AS cnsctv_days
+FROM cte_date_diff
+)
+SELECT DISTINCT user_id
+FROM cte_cnsctv_days
+WHERE cnsctv_days = 1;
