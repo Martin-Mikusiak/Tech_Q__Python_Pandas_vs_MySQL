@@ -31,11 +31,12 @@
 #    3.11 Monthly Percentage Difference
 #    3.12 Rank Variance Per Country
 #    3.13 Consecutive Days
-#    3.14 ***** In progress *****
+#    3.14 Player with Longest Streak
+#    3.15 ***** In progress *****
 
 
 
-# 3. Difficulty: Hard  (13 Questions)
+# 3. Difficulty: Hard  (15 Questions)
 # ***********************************
 
 # 3.1 Marketing Campaign Success [Advanced]
@@ -730,3 +731,65 @@ FROM cte_date_diff
 SELECT DISTINCT user_id
 FROM cte_cnsctv_days
 WHERE cnsctv_days = 1;
+
+
+
+# 3.14 Player with Longest Streak
+# https://platform.stratascratch.com/coding/2059-player-with-longest-streak?code_type=2
+
+# You are given a table of tennis players and their matches that they could either win (W) or lose (L).
+# Find the longest streak of wins. A streak is a set of consecutive won matches of one player.
+# The streak ends once a player loses their next match.
+# Output the ID of the player or players and the length of the streak.
+
+
+# Python
+# ******
+import pandas as pd
+
+df = players_results.sort_values(by=["player_id", "match_date"]).reset_index(drop=True)
+df = df.assign(result = df["match_result"].eq("W").astype(int))
+
+df = df.assign(r_diff = df.groupby(by="player_id")["result"].diff().fillna(df["result"]))
+
+df = df.assign(grp_id = df[df["r_diff"].eq(1)].groupby(by="player_id")["r_diff"].cumsum())
+df = df[df["result"].eq(1)]
+df["grp_id"] = df["grp_id"].ffill()
+
+df_gr = df.groupby(by=["player_id", "grp_id"], as_index=False).agg(streak_length = ("result", "count"))
+df_gr[df_gr["streak_length"].eq(df_gr["streak_length"].max())][["player_id", "streak_length"]].drop_duplicates()
+
+
+# MySQL
+# *****
+WITH cte_matches AS
+(
+SELECT 
+    player_id,
+    match_date,
+    CASE WHEN match_result = 'W' THEN 1 ELSE 0 END AS result,
+    ROW_NUMBER() OVER(PARTITION BY player_id ORDER BY match_date) AS r_n
+FROM players_results
+),
+cte_streaks_grp AS
+(
+SELECT 
+    player_id,
+    result,
+    r_n - SUM(CASE WHEN result = 1 THEN 1 ELSE 0 END) OVER (PARTITION BY player_id ORDER BY match_date) AS grp_id
+FROM cte_matches
+),
+cte_streak_length AS
+(
+SELECT
+    player_id,
+    COUNT(*) AS streak_length
+FROM cte_streaks_grp
+WHERE result = 1
+GROUP BY player_id, grp_id
+)
+SELECT DISTINCT
+    player_id,
+    streak_length
+FROM cte_streak_length
+WHERE streak_length = (SELECT MAX(streak_length) FROM cte_streak_length);
